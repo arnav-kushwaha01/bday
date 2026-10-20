@@ -1,0 +1,152 @@
+Before starting Phase 2, I will provide the actual content and media for Anshika.
+
+I will provide:
+
+1. PERSONAL INFORMATION
+- Name : Anshika Bajpai
+- Birthday : 25 - 10 - 2003
+- Personality traits : Clumsy, Funny, Angry Birdie, Mastikhor, Beautiful
+- Favorite things : Books, Reality TV Shows, Crime/Thriller Movies, Food, Roaming, Arnav
+- Interests : Reading, Binge Watching, Travelling, Eating, Being Angry
+- Habits : Getting Angry, Crying over little things, Being overly Cute, Adore Love(Arnav)
+- Quirks : Strong, Not Giving Up, Consistent, Learner, Overcoming Bad and Improving to be Better
+- Things she says : how much she misses Arnav everytime, i love you, i hate you(looks so cute lying), Annav(calling me cutely), why haven't you texted me for an hour, bahot busy hoge na, 11:11
+- Things she loves : Arnav, Surprises, Scooty rides with Arnav, Reading Books in Solace, Supporting what's right, Helping Others 
+- Things she dislikes : Arnav being Loud, Arnav talking Bad, Waiting, orthodox people, Narcotics
+- anshika and Arnav are in relationship since 27-11-2021 also we've been in same school since childhood (you can mention it or just use this information for analysis)
+
+2. MEMORIES
+- Important memories : since that 1 time i met her in paul sir's coaching in class 9th and finally becoming best friends and a relationship in class 12th, I've been the happiest. it was like this is the only thing i yearned for my whole life and i got it. so yeah i have every memory with her since class 12th in all emotional spectrum.
+- Funny memories : she falls usually and she is really clumsy so whenever she falls and trips i laugh hhahaahaa, the best friend i was comes out of me watching her do silly things
+- Emotional memories : whenever i have to go far away from her especially my college she cried for me everytime which eventually made me cry everytime on the bus remembering someone loves me so much 
+- Firsts : as an anti-social was hard to interact but still got our first photo as friends in kulhad78 cafe(photo is in media named : our-first-photo) rest she is my first everything.
+- Trips : The chapter's gonna start soon..........
+- Special moments : every moment i spend with her obviously when we are not fighting. she gave me flowers for the first time it was weird i was shy as hell and the happiest
+- Stories that only we understand : (please add it yourself by doing analysis on all photos videos or leave space for it)
+
+3. PHOTOS
+I will upload photographs of Anshika, us, places, objects, screenshots, and other meaningful images.
+
+they are included in public/media/photos with self explainable names so understand them.
+
+For every photo, preserve the original file and create a content entry containing:
+- asset filename
+- title
+- description
+- memory/meaning
+- approximate date if known
+- room where it should appear
+- importance level
+- whether it should be discoverable or immediately visible(you decide)
+
+Do NOT duplicate or unnecessarily re-encode original assets.
+
+4. VIDEOS
+I will upload personal videos.
+(i'll suggest to not use their sounds and mute them)
+
+they are included in public/media/videos with self explainable names so understand them.
+
+
+For every video, create:
+- asset filename
+- title
+- description
+- what the video represents
+- approximate date if known
+- intended room
+- whether it should play inline, as a cinematic sequence, or only after interaction
+
+Videos must NOT autoplay unexpectedly.
+
+Use optimized video formats and poster images.
+
+5. VOICE / AUDIO
+I may provide voice recordings, songs, ambient audio, or personal recordings.
+
+they are included in public/media/audio with self explainable names so understand them.
+
+Create metadata for each:
+- filename
+- purpose
+- room
+- trigger
+- volume priority
+(and set it yourself properly)
+
+6. FUTURE / DREAMS
+I will provide things Anshika wants to experience - Doing everything like Travelling the whole world with me - explore and understand different cultures - do new activities like adventures extreme sports like gliding and all - learn new things like music dance art craft - she basically wants to be the master of all trades and ik she will she is a free spirit and there is too much for her to explore she just needs a job and obviously me and BOOM, places she wants to visit - mountains - beaches - historical sights - new York - tourist sites and even underrated places, goals - earn - get a house - get pets especially Dogs - make her family proud - show the relatives yes she is still the prodigy they thought of her and she made it - marry Arnav , dreams(you can mix them with goals) and things she deserves to experience - Happiness, Wealth, Love, Children of our own, Being Proud of herself, Respect.
+
+7. INSIDE JOKES
+I will provide the actual inside jokes.(see inside jokes are a moment thing, they happen at a moment so i don't remember much just frame it like this only like - remember when this happened and then we both start laughing because yes we literally have so many laughs we even make fun of each other we make jokes too often we make each other laugh like hell and she laughs like a madman)
+
+Do NOT invent any.
+
+8. EASTER EGGS
+I will provide possible hidden references, jokes, photographs, messages and secret interactions.(or you decide yourself using all the data text and media i shared) also you can use "cake-tease" photo inside public/media/photos to tell her the concept art of her birthday cake i ordered specially to be baked.
+
+9. FINAL MESSAGE
+
+I will provide the personal birthday message - Hey Love, Happiest Birthday to You. I love you so so Much I Adore You, You're the best Thing that ever happened to me. With you I actually came to life I was alive for the first time and their is not a single day that passes by when i am not grateful for you and so proud of you literally. You have so much you go through so much and is still persistant and committed. I want you to know that you'll achieve your goals 100% you're made for something great and i know it's taking a lot of time but i know you'll make it because efforts don't go in vain, the fruit will come to you however time it takes so you just keep being consistent and then we'll have a life we imagined for us. We'll make it YOU'LL MAKE IT. You're Big You're Beautiful You're Strong.For today i need you to enjoy your day and don't regret anything you're allowed to treat yourself you're allowed to be interested in things you're allowed to buy things you're allowed to be HAPPY. Don't think too much about things you just start enjoying life a little without joy what's the point so this and everything all the gifts all the happiness YOU DESERVE THE WORLD MY GIRL and i will make sure to give it to you my Darling.
+GO LITTLE ROCKSTAR!!! 
+
+and video message separately(later) - leave space for it
+
+10. DISTANCE MAP
+- i need you to add a real-time map showing how far apart we are (her house - https://maps.app.goo.gl/s1dLuDynjvxrcNFt9) (my house - https://maps.app.goo.gl/SWEZhMqauograGp5A) (where i am right now - https://maps.app.goo.gl/RMzF2dT6jEPgzL527) (our school - https://maps.app.goo.gl/zzdBhiAdg9qVDLyy8) (make it creative and matching the theme)
+
+IMPORTANT:
+
+Do NOT start Phase 2 yet.
+
+First:
+
+- ingest the content
+- organize the assets
+- validate all content against the existing Zod schemas
+- extend schemas only where genuinely necessary
+- create a clean content manifest
+- identify missing information
+- identify which assets belong to which room
+- identify assets that require preprocessing
+- identify assets that should be lazy-loaded
+- identify assets required immediately at startup
+- verify filenames and references
+- do NOT invent personal information
+- do NOT generate fake memories
+- do NOT modify the architecture unnecessarily
+- you can do analysis through all the media and content to understand our relationship properly
+
+Do not compress, resize, crop, or permanently modify the original source files.
+
+Create optimized derivatives only when required for the production build.
+
+After processing everything, give me a concise CONTENT READINESS REPORT.
+
+Do not begin building the 3D rooms until I explicitly say:
+
+"START PHASE 2."
+
+CONTENT READINESS REPORT
+Status: WAITING FOR CONTENT
+
+Personal Information: Pending
+Memories: Pending
+Photos: Pending (0 files received)
+Videos: Pending (0 files received)
+Voice / Audio: Pending (0 files received)
+Future / Dreams: Pending
+Inside Jokes: Pending
+Easter Eggs: Pending
+Final Message: Pending
+Next Steps: I am ready to ingest and organize your assets. Please provide the textual content (memories, traits, jokes, etc.) here in the chat, and place your media files (photos, videos, audio) into the public/media directory (or provide them however is most convenient for you).
+
+Once you provide the content, I will:
+
+Ingest and organize the assets into the correct directories.
+Validate all text and metadata against our Zod schemas (extending them only where necessary).
+Create a clean content manifest mapping each asset to its intended room.
+Provide an updated readiness report confirming what is ready, what is missing, and what requires preprocessing.
+I will strictly preserve your original files and will not start building Phase 2 until you explicitly say: "START PHASE 2."
+
+Please go ahead and provide the content whenever you're ready!
