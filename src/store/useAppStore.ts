@@ -34,6 +34,7 @@ export const SaveDataSchema = z.object({
   isDossierOpen: z.boolean().default(false),
   viewMode: z.enum(["3d", "2d"]).default("3d"),
   lightingMode: z.enum(["dark", "normal"]).default("normal"),
+  isBirthdayCelebrationActive: z.boolean().default(false),
   version: z.number(), // versioning for migrations
 });
 export type SaveData = z.infer<typeof SaveDataSchema>;
@@ -90,9 +91,12 @@ const INITIAL_STATE: Omit<SaveData, "version"> = {
   isDossierOpen: false,
   viewMode: "3d",
   lightingMode: "normal",
+  isBirthdayCelebrationActive: false,
 };
 
 type AppStore = SaveData & {
+  isBirthdayCelebrationActive: boolean;
+  setBirthdayCelebrationActive: (active: boolean) => void;
   setRoom: (room: RoomState) => void;
   unlockEvidence: (id: string) => void;
   unlockEasterEgg: (id: string) => void;
@@ -115,7 +119,10 @@ export const useAppStore = create<AppStore>()(
     (set) => ({
       ...INITIAL_STATE,
       version: 1, // Store version
+      isBirthdayCelebrationActive: false,
       
+      setBirthdayCelebrationActive: (isBirthdayCelebrationActive) => set({ isBirthdayCelebrationActive }),
+
       setRoom: (room) => set({ currentRoom: room }),
       
       unlockEvidence: (id) => set((state) => ({

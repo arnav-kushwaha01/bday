@@ -25,6 +25,9 @@ import {
   GrandFinalPortalEntrance,
 } from "./HubEntrances";
 import { CakeEasterEggSafe } from "@/components/easter-eggs/CakeEasterEggSafe";
+import { HubBirthdayCelebration } from "./HubBirthdayCelebration";
+import { soundEngine } from "@/engine/audio/AudioManager";
+import { useAppStore } from "@/store/useAppStore";
 
 const DUST_COUNT = 300;
 const INITIAL_PARTICLE_POSITIONS = new Float32Array(DUST_COUNT * 3);
@@ -47,6 +50,12 @@ export default function HubRoom() {
   const openMemory = useTransitionStore((s) => s.openMemory);
   const titleRef = useRef<THREE.Group>(null);
   const particlesRef = useRef<THREE.Points>(null);
+
+  const triggerBirthday = () => {
+    soundEngine.playHappyBirthdayMelody();
+    useAppStore.getState().setBirthdayCelebrationActive(true);
+    openMemory("happy-birthday-celebration");
+  };
 
   // Fresh array for particle positions per component instance
   const particlePositions = useMemo(
@@ -102,14 +111,14 @@ export default function HubRoom() {
             type="object"
             position={[0, 0, 0]}
             interactionPrompt="✦ UNLOCK 23RD BIRTHDAY CELEBRATION & MELODY // ANSHIKA ✦"
-            onInteract={() => openMemory("happy-birthday-celebration")}
+            onInteract={triggerBirthday}
             showMarker={true}
           >
             <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.3}>
               <group
                 onClick={(e) => {
                   e.stopPropagation();
-                  openMemory("happy-birthday-celebration");
+                  triggerBirthday();
                 }}
               >
                 {/* Manila Dossier Book Shape */}
@@ -199,7 +208,7 @@ export default function HubRoom() {
           receiveShadow
           onClick={(e) => {
             e.stopPropagation();
-            openMemory("happy-birthday-celebration");
+            triggerBirthday();
           }}
           onPointerOver={() => {
             document.body.style.cursor = "pointer";
@@ -234,7 +243,7 @@ export default function HubRoom() {
           type="evidence"
           position={[0, 0.4, 0]}
           interactionPrompt="✦ UNLOCK 23RD BIRTHDAY CELEBRATION & MELODY // ANSHIKA ✦"
-          onInteract={() => openMemory("happy-birthday-celebration")}
+          onInteract={triggerBirthday}
           showMarker={true}
         >
           <mesh visible={false}>
@@ -375,6 +384,9 @@ export default function HubRoom() {
       >
         EVIDENCE ARCHIVE // AUTHORIZED INVESTIGATOR ONLY
       </Text>
+
+      {/* ── 3D Glassy Hearts Birthday Celebration Layer (Active when melody is playing) ── */}
+      <HubBirthdayCelebration />
     </RoomShell>
   );
 }

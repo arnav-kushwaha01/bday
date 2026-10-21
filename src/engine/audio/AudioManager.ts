@@ -15,7 +15,7 @@
  * 5. Procedural sound effects: footsteps, evidence inspect chime, safe dial tick, safe unlock, door latch, paper rustle, cassette click, wish star.
  */
 
-import { RoomState } from "@/store/useAppStore";
+import { RoomState, useAppStore } from "@/store/useAppStore";
 
 export type AudioPlayMode = "ROOM_SYNC" | "LOVE_SONGS";
 
@@ -96,6 +96,7 @@ class AudioManager {
   private playMode: AudioPlayMode = "ROOM_SYNC";
   private currentTrackIndex = 0;
   private isPlaying = false;
+  private isBirthdayMelodyPlaying = false;
 
   // Synthesis loops & intervals
   private synthInterval: number | null = null;
@@ -324,17 +325,25 @@ class AudioManager {
     return this.isPlaying && !this.isMuted;
   }
 
+  public isBirthdayMelodyActive(): boolean {
+    return this.isBirthdayMelodyPlaying && this.isPlaying && !this.isMuted;
+  }
+
   /**
    * Plays the default Happy Birthday melody, triggered when clicking the middle platform in the main room.
    */
   public playHappyBirthdayMelody() {
     this.stopActivePlayback();
+    this.isBirthdayMelodyPlaying = true;
     this.isMuted = false;
     this.isPlaying = true;
     this.init().then(() => {
       this.startHappyBirthdayMelodyLoop();
     });
     this.applyGains();
+    if (typeof window !== "undefined") {
+      useAppStore.getState().setBirthdayCelebrationActive(true);
+    }
     this.notify();
   }
 
@@ -413,6 +422,13 @@ class AudioManager {
     if (this.customAudio) {
       this.customAudio.pause();
       this.customAudio = null;
+    }
+
+    if (this.isBirthdayMelodyPlaying) {
+      this.isBirthdayMelodyPlaying = false;
+      if (typeof window !== "undefined") {
+        useAppStore.getState().setBirthdayCelebrationActive(false);
+      }
     }
   }
 

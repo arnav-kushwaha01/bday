@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useTransitionStore } from "@/engine/transitions/transitionStore";
 import { soundEngine } from "@/engine/audio/AudioManager";
+import { useAppStore } from "@/store/useAppStore";
 import { THEME } from "@/lib/theme";
 
 export function HappyBirthdayModal() {
   const activeMemoryId = useTransitionStore((s) => s.activeMemoryId);
   const closeMemory = useTransitionStore((s) => s.closeMemory);
+  const setBirthdayCelebrationActive = useAppStore((s) => s.setBirthdayCelebrationActive);
 
   const isOpen = activeMemoryId === "happy-birthday-celebration";
   const [isPlaying, setIsPlaying] = useState(true);
@@ -16,9 +18,10 @@ export function HappyBirthdayModal() {
   useEffect(() => {
     if (isOpen) {
       soundEngine.playHappyBirthdayMelody();
+      setBirthdayCelebrationActive(true);
       setIsPlaying(true);
     }
-  }, [isOpen]);
+  }, [isOpen, setBirthdayCelebrationActive]);
 
   // Handle escape key
   useEffect(() => {
@@ -213,6 +216,7 @@ export function HappyBirthdayModal() {
             <button
               onClick={() => {
                 soundEngine.playHappyBirthdayMelody();
+                setBirthdayCelebrationActive(true);
                 setIsPlaying(true);
               }}
               style={{
@@ -232,7 +236,9 @@ export function HappyBirthdayModal() {
             <button
               onClick={() => {
                 soundEngine.togglePlayPause();
-                setIsPlaying((p) => !p);
+                const willPlay = !isPlaying;
+                setIsPlaying(willPlay);
+                setBirthdayCelebrationActive(willPlay);
               }}
               style={{
                 background: "rgba(255, 255, 255, 0.08)",
@@ -250,17 +256,57 @@ export function HappyBirthdayModal() {
           </div>
         </div>
 
+        {/* Enter Celebration Room Button */}
+        <button
+          onClick={() => {
+            // Keep music playing and return to 3D room to pop floating glassy hearts
+            setBirthdayCelebrationActive(true);
+            closeMemory();
+          }}
+          style={{
+            marginTop: "1.2rem",
+            width: "100%",
+            background: "linear-gradient(135deg, #e11d48 0%, #be123c 50%, #f59e0b 100%)",
+            border: "1px solid #fda4af",
+            borderRadius: 6,
+            padding: "0.85rem 1.2rem",
+            color: "#ffffff",
+            fontWeight: 900,
+            fontSize: "0.82rem",
+            letterSpacing: "0.14em",
+            cursor: "pointer",
+            boxShadow: "0 0 25px rgba(225, 29, 72, 0.45)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "0.6rem",
+            transition: "all 0.2s",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "scale(1.02)";
+            e.currentTarget.style.boxShadow = "0 0 35px rgba(244, 63, 94, 0.7)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.boxShadow = "0 0 25px rgba(225, 29, 72, 0.45)";
+          }}
+        >
+          <span>♥</span>
+          <span>ENTER CELEBRATION ROOM (POP 3D GLASS HEARTS)</span>
+          <span>♥</span>
+        </button>
+
         {/* Footer Close Instruction */}
         <div
           style={{
-            marginTop: "1.2rem",
+            marginTop: "0.8rem",
             textAlign: "center",
-            fontSize: "0.6rem",
+            fontSize: "0.58rem",
             color: "#8a755d",
-            letterSpacing: "0.2em",
+            letterSpacing: "0.18em",
           }}
         >
-          PRESS [ESC] OR CLICK OUTSIDE TO RETURN TO THE ARCHIVE VAULT
+          PRESS [ESC] OR CLICK OUTSIDE TO RETURN // ROOM IS FILLED WITH 3D GLASS HEARTS
         </div>
       </div>
     </div>
