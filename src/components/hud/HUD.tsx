@@ -8,6 +8,7 @@ import { MobileControls } from "./MobileControls";
 import { CinematicOverlay } from "./CinematicOverlay";
 import { EvidenceModal } from "./EvidenceModal";
 import { FinalFileModal } from "./FinalFileModal";
+import { HappyBirthdayModal } from "./HappyBirthdayModal";
 import { EasterEggModals } from "@/components/easter-eggs/EasterEggModals";
 import { DistanceMap2DModal } from "@/components/rooms/distance/DistanceMap2DModal";
 import { usePlayerStore } from "@/engine/player/playerStore";
@@ -33,10 +34,27 @@ export function HUD() {
   const setExperienceMode = useAppStore((s) => s.setExperienceMode);
   const setViewMode = useAppStore((s) => s.setViewMode);
   const discoveredEvidence = useAppStore((s) => s.discoveredEvidence);
+  const lightingMode = useAppStore((s) => s.lightingMode);
+  const toggleLightingMode = useAppStore((s) => s.toggleLightingMode);
+
+  const isInspectMode = usePlayerStore((s) => s.isInspectMode);
+  const toggleInspectMode = usePlayerStore((s) => s.toggleInspectMode);
 
   const enterRoom = useTransitionStore((s) => s.enterRoom);
   const exitRoom = useTransitionStore((s) => s.exitRoom);
   const isTouchDevice = usePlayerStore((s) => s.isTouchDevice);
+
+  // Keyboard shortcut for [L] (Lighting toggle)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === "l" || e.key === "L") {
+        toggleLightingMode();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [toggleLightingMode]);
 
   // Toggle 2D schematic map with [M] key when in DISTANCE room
   useEffect(() => {
@@ -160,6 +178,49 @@ export function HUD() {
                 title={audioEnabled ? "Mute audio" : "Enable audio"}
               >
                 {audioEnabled ? "♪ ON" : "♪ MUTED"}
+              </button>
+
+              {/* Lighting Mode toggle: Normal Light vs Eerie Dark Mode */}
+              <button
+                onClick={toggleLightingMode}
+                style={{
+                  background: "rgba(16, 13, 11, 0.85)",
+                  border: `1px solid ${lightingMode === "normal" ? "#facc15" : THEME.folder.dark}`,
+                  borderRadius: 2,
+                  padding: "clamp(0.26rem, 1.2vw, 0.38rem) clamp(0.4rem, 1.6vw, 0.65rem)",
+                  color: lightingMode === "normal" ? "#facc15" : "#a8a29e",
+                  fontSize: "clamp(0.5rem, 1.4vw, 0.58rem)",
+                  letterSpacing: "0.12em",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  transition: "all 0.2s",
+                  whiteSpace: "nowrap",
+                }}
+                title="Toggle Lighting Mode: Normal-Light vs Eerie Dark [L]"
+              >
+                {lightingMode === "normal" ? "☀️ LIGHT" : "🌙 DARK"}
+              </button>
+
+              {/* Inspect Mode (Flying 3D) toggle */}
+              <button
+                onClick={toggleInspectMode}
+                style={{
+                  background: isInspectMode ? "rgba(56, 189, 248, 0.2)" : "rgba(16, 13, 11, 0.85)",
+                  border: `1px solid ${isInspectMode ? "#38bdf8" : THEME.folder.dark}`,
+                  borderRadius: 2,
+                  padding: "clamp(0.26rem, 1.2vw, 0.38rem) clamp(0.4rem, 1.6vw, 0.65rem)",
+                  color: isInspectMode ? "#38bdf8" : THEME.folder.light,
+                  fontSize: "clamp(0.5rem, 1.4vw, 0.58rem)",
+                  fontWeight: isInspectMode ? 700 : 500,
+                  letterSpacing: "0.12em",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  transition: "all 0.2s",
+                  whiteSpace: "nowrap",
+                }}
+                title="Toggle Inspect / Flying 3D Mode [Y]"
+              >
+                {isInspectMode ? "✈ FLYING [Y]" : "✈ INSPECT [Y]"}
               </button>
 
               {/* Tape Deck / Love Playlist Modal Trigger */}
@@ -354,6 +415,100 @@ export function HUD() {
             </div>
           </div>
 
+          {/* Floating Inspect Flying Mode Active Indicator */}
+          {isInspectMode && (
+            <div
+              style={{
+                position: "fixed",
+                top: "4.8rem",
+                left: "50%",
+                transform: "translateX(-50%)",
+                zIndex: 60,
+                background: "rgba(8, 14, 24, 0.94)",
+                border: "1px solid #38bdf8",
+                boxShadow: "0 0 24px rgba(56, 189, 248, 0.35)",
+                borderRadius: 4,
+                padding: "0.45rem 1rem",
+                color: "#38bdf8",
+                fontFamily: "var(--font-geist-mono), monospace",
+                textAlign: "center",
+                pointerEvents: "auto",
+              }}
+            >
+              <div style={{ fontSize: "0.68rem", fontWeight: 800, letterSpacing: "0.16em" }}>
+                ✈ INSPECT / FLYING MODE ACTIVE • 6-AXIS MOVEMENT
+              </div>
+              <div style={{ fontSize: "0.52rem", color: "#e0f2fe", letterSpacing: "0.1em", marginTop: "0.12rem" }}>
+                [WASD] Fly in look angle • [SPACE / E] Ascend • [Q / C] Descend • [SHIFT] Turbo • [Y] Exit to FPP
+              </div>
+            </div>
+          )}
+
+          {/* Distance Room Globe Zoom Controls */}
+          {currentRoom === "DISTANCE" && (
+            <div
+              style={{
+                position: "fixed",
+                bottom: "1.4rem",
+                right: "1.4rem",
+                zIndex: 50,
+                display: "flex",
+                gap: "0.35rem",
+                alignItems: "center",
+                fontFamily: "var(--font-geist-mono), monospace",
+                pointerEvents: "auto",
+              }}
+            >
+              <button
+                onClick={() => (window as unknown as { __ZOOM_GLOBE_IN__?: () => void }).__ZOOM_GLOBE_IN__?.()}
+                style={{
+                  background: "rgba(16, 13, 11, 0.9)",
+                  border: `1px solid ${THEME.evidence.primary}`,
+                  borderRadius: 2,
+                  padding: "0.35rem 0.65rem",
+                  color: THEME.evidence.primary,
+                  fontSize: "0.6rem",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+                title="Zoom in Earth Globe"
+              >
+                + ZOOM IN
+              </button>
+              <button
+                onClick={() => (window as unknown as { __ZOOM_GLOBE_OUT__?: () => void }).__ZOOM_GLOBE_OUT__?.()}
+                style={{
+                  background: "rgba(16, 13, 11, 0.9)",
+                  border: `1px solid ${THEME.evidence.primary}`,
+                  borderRadius: 2,
+                  padding: "0.35rem 0.65rem",
+                  color: THEME.evidence.primary,
+                  fontSize: "0.6rem",
+                  fontWeight: 800,
+                  cursor: "pointer",
+                }}
+                title="Zoom out Earth Globe"
+              >
+                - ZOOM OUT
+              </button>
+              <button
+                onClick={() => (window as unknown as { __RESET_GLOBE_ZOOM__?: () => void }).__RESET_GLOBE_ZOOM__?.()}
+                style={{
+                  background: "rgba(16, 13, 11, 0.8)",
+                  border: `1px solid ${THEME.folder.dark}`,
+                  borderRadius: 2,
+                  padding: "0.35rem 0.55rem",
+                  color: THEME.folder.light,
+                  fontSize: "0.58rem",
+                  cursor: "pointer",
+                }}
+                title="Reset Globe Zoom to 100%"
+              >
+                ↺ 100%
+              </button>
+            </div>
+          )}
+
           {/* Desktop Controls Hint (subtle typewriter font, bottom left) */}
           {!isTouchDevice && (
             <div
@@ -366,14 +521,14 @@ export function HUD() {
                 fontFamily: "var(--font-geist-mono), monospace",
                 fontSize: "0.5rem",
                 letterSpacing: "0.2em",
-                color: "#6b563d",
+                color: "#8a755d",
                 lineHeight: 1.8,
               }}
             >
-              <div>[W A S D] MOVE • [DRAG] LOOK</div>
+              <div>[W A S D] MOVE • [DRAG] LOOK • [Y] INSPECT / FLY</div>
               <div>
-                [SHIFT] SPRINT • [E] INSPECT EVIDENCE • [ESC] BACK
-                {currentRoom === "DISTANCE" ? " • [M] 2D MAP" : ""}
+                [SHIFT] SPRINT • [E] INSPECT • [L] LIGHT/DARK • [ESC] BACK
+                {currentRoom === "DISTANCE" ? " • [M] 2D MAP • [WHEEL] ZOOM GLOBE" : ""}
               </div>
             </div>
           )}
@@ -391,6 +546,9 @@ export function HUD() {
 
           {/* Forensic Evidence Dossier Modal */}
           <EvidenceModal />
+
+          {/* Happy Birthday Special Celebration Modal */}
+          <HappyBirthdayModal />
 
           {/* Final Case File Modal (Room 8 Climax) */}
           <FinalFileModal />

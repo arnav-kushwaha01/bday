@@ -4,7 +4,7 @@ import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import { Text } from "@react-three/drei";
 import * as THREE from "three";
-import type { RoomState } from "@/store/useAppStore";
+import { useAppStore, type RoomState } from "@/store/useAppStore";
 import { useTransitionStore } from "@/engine/transitions/transitionStore";
 import { InteractableObject } from "@/engine/interaction/InteractableObject";
 import { THEME } from "@/lib/theme";
@@ -24,13 +24,15 @@ export function RoomShell({
   children,
   width = 16,
   depth = 16,
-  height = 6,
+  height = 5,
 }: {
   children?: React.ReactNode;
   width?: number;
   depth?: number;
   height?: number;
 }) {
+  const lightingMode = useAppStore((s) => s.lightingMode);
+  const isLight = lightingMode === "normal";
   return (
     <group>
       {/* Floor */}
@@ -76,13 +78,13 @@ export function RoomShell({
         />
       </mesh>
 
-      {/* Warm ambient detective / Westworld saloon illumination (bright & atmospheric) */}
-      <ambientLight intensity={0.72} color="#fff0db" />
+      {/* Warm ambient detective / Westworld saloon illumination (bright & atmospheric in normal mode) */}
+      <ambientLight intensity={isLight ? 1.3 : 0.45} color={isLight ? "#fff5e6" : "#2a1e16"} />
 
       {/* Key light — warm directional sunlight / overhead lantern */}
       <directionalLight
         position={[4, 6, 3]}
-        intensity={1.15}
+        intensity={isLight ? 1.6 : 0.85}
         color="#fff4e0"
         castShadow
         shadow-mapSize-width={1024}
@@ -90,7 +92,7 @@ export function RoomShell({
       />
 
       {/* Warm Golden Fill light */}
-      <pointLight position={[0, 4.5, 0]} intensity={0.8} color="#ffb35a" distance={24} />
+      <pointLight position={[0, 4.5, 0]} intensity={isLight ? 1.35 : 0.6} color="#ffb35a" distance={24} />
 
       {/* Westworld Wall Sconces with flickering candle lanterns along side walls */}
       <WestworldWallSconce

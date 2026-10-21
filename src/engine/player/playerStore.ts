@@ -3,6 +3,7 @@ import { create } from "zustand";
 interface PlayerStore {
   isMoving: boolean;
   isSprinting: boolean;
+  isInspectMode: boolean;
   mobileJoystick: { x: number; y: number };
   mobileLookDelta: { x: number; y: number };
   isTouchDevice: boolean;
@@ -11,11 +12,14 @@ interface PlayerStore {
   setMobileLookDelta: (x: number, y: number) => void;
   setIsTouchDevice: (isTouch: boolean) => void;
   setMovementState: (isMoving: boolean, isSprinting: boolean) => void;
+  setInspectMode: (inspect: boolean) => void;
+  toggleInspectMode: () => void;
 }
 
 export const usePlayerStore = create<PlayerStore>((set) => ({
   isMoving: false,
   isSprinting: false,
+  isInspectMode: false,
   mobileJoystick: { x: 0, y: 0 },
   mobileLookDelta: { x: 0, y: 0 },
   isTouchDevice: false,
@@ -24,4 +28,6 @@ export const usePlayerStore = create<PlayerStore>((set) => ({
   setMobileLookDelta: (x, y) => set({ mobileLookDelta: { x, y } }),
   setIsTouchDevice: (isTouch) => set({ isTouchDevice: isTouch }),
   setMovementState: (isMoving, isSprinting) => set({ isMoving, isSprinting }),
+  setInspectMode: (isInspectMode) => set({ isInspectMode }),
+  toggleInspectMode: () => set((state) => ({ isInspectMode: !state.isInspectMode })),
 }));

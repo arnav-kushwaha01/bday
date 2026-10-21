@@ -22,7 +22,9 @@ export default function ArchiveScene() {
   const setDossierOpen = useAppStore((s) => s.setDossierOpen);
   const setExperienceMode = useAppStore((s) => s.setExperienceMode);
   const discoveredEvidence = useAppStore((s) => s.discoveredEvidence);
+  const lightingMode = useAppStore((s) => s.lightingMode);
   const config = QUALITY_CONFIGS[quality];
+  const isLight = lightingMode === "normal";
 
   return (
     <Canvas
@@ -40,11 +42,21 @@ export default function ArchiveScene() {
         left: 0,
         width: "100%",
         height: "100%",
-        background: THEME.noir.pitch,
+        background: isLight ? "#1a1612" : THEME.noir.pitch,
       }}
     >
-      <color attach="background" args={[THEME.noir.pitch]} />
-      <fog attach="fog" args={[THEME.noir.pitch, 18, 55]} />
+      <color attach="background" args={[isLight ? "#1a1612" : THEME.noir.pitch]} />
+      <fog attach="fog" args={[isLight ? "#1e1814" : THEME.noir.pitch, isLight ? 28 : 16, isLight ? 80 : 52]} />
+
+      {/* Global Illumination based on Light/Dark Mode */}
+      <ambientLight intensity={isLight ? 1.35 : 0.28} color={isLight ? "#fff7ea" : "#140f0c"} />
+      {isLight && (
+        <directionalLight
+          position={[0, 16, 0]}
+          intensity={1.15}
+          color="#fffdf8"
+        />
+      )}
 
       <CameraRig />
       <PlayerController />

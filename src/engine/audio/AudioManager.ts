@@ -325,6 +325,20 @@ class AudioManager {
   }
 
   /**
+   * Plays the default Happy Birthday melody, triggered when clicking the middle platform in the main room.
+   */
+  public playHappyBirthdayMelody() {
+    this.stopActivePlayback();
+    this.isMuted = false;
+    this.isPlaying = true;
+    this.init().then(() => {
+      this.startHappyBirthdayMelodyLoop();
+    });
+    this.applyGains();
+    this.notify();
+  }
+
+  /**
    * Called when the active 3D room changes.
    * If in ROOM_SYNC mode, crossfades to the new room soundscape.
    * If in FINAL room, always adheres strictly to Rule 6 (near-silence).
@@ -415,9 +429,10 @@ class AudioManager {
 
     switch (room) {
       case "HUB":
-        // Mysterious museum tone, low warm drone, gentle vintage tape hiss
-        this.createDrone([65.4, 130.8, 196.0], 0.08, "sine");
-        this.createAirHiss(0.015, 600);
+        // Eerie dark themed mystery tone: low ominous tritone rumble, dissonant detuned whispers, vintage dust hiss
+        this.createDrone([43.65, 61.74, 87.31], 0.09, "sawtooth", 280); // F1 + B1 tritone eerie rumble
+        this.createDrone([110.0, 116.54, 155.56], 0.04, "sine", 400); // eerie detuned harmonic whispers
+        this.createAirHiss(0.018, 480);
         break;
 
       case "HER_GALLERY":
@@ -686,6 +701,111 @@ class AudioManager {
     this.startMusicBoxTones([
       392.0, 440.0, 493.88, 523.25, 587.33, 659.25, 783.99,
     ], 1400);
+  }
+
+  /**
+   * Authentic "Happy Birthday To You" Melodic Synthesizer
+   * In F Major with lilting 3/4 waltz celesta bell tones, acoustic harmonics, and piano chords.
+   */
+  public startHappyBirthdayMelodyLoop() {
+    if (!this.ctx || !this.musicGain) return;
+
+    const melody: Array<{ note: number; dur: number; chord?: number[] }> = [
+      // "Happy Birthday to you"
+      { note: 261.63, dur: 0.36 }, // C4
+      { note: 261.63, dur: 0.26 }, // C4
+      { note: 293.66, dur: 0.65, chord: [174.61, 261.63, 349.23] }, // D4 + F Major
+      { note: 261.63, dur: 0.65 }, // C4
+      { note: 349.23, dur: 0.65, chord: [174.61, 220.0, 349.23] }, // F4
+      { note: 329.63, dur: 1.25, chord: [130.81, 196.0, 261.63, 329.63] }, // E4 + C Major
+      { note: 0, dur: 0.35 },
+
+      // "Happy Birthday to you"
+      { note: 261.63, dur: 0.36 }, // C4
+      { note: 261.63, dur: 0.26 }, // C4
+      { note: 293.66, dur: 0.65, chord: [130.81, 196.0, 261.63, 293.66] }, // D4 + C Major
+      { note: 261.63, dur: 0.65 }, // C4
+      { note: 392.00, dur: 0.65, chord: [196.0, 246.94, 392.0] }, // G4 + G Major
+      { note: 349.23, dur: 1.25, chord: [174.61, 261.63, 349.23] }, // F4 + F Major
+      { note: 0, dur: 0.35 },
+
+      // "Happy Birthday dear Anshika"
+      { note: 261.63, dur: 0.36 }, // C4
+      { note: 261.63, dur: 0.26 }, // C4
+      { note: 523.25, dur: 0.70, chord: [174.61, 261.63, 349.23, 523.25] }, // C5 + F Major
+      { note: 440.00, dur: 0.65, chord: [146.83, 220.0, 349.23, 440.0] }, // A4 + Dm
+      { note: 349.23, dur: 0.65, chord: [116.54, 174.61, 233.08, 349.23] }, // F4 + Bb Major
+      { note: 329.63, dur: 0.65, chord: [130.81, 196.0, 261.63, 329.63] }, // E4 + C Major
+      { note: 293.66, dur: 1.25, chord: [146.83, 220.0, 293.66] }, // D4 + Dm
+      { note: 0, dur: 0.35 },
+
+      // "Happy Birthday to you!"
+      { note: 466.16, dur: 0.36 }, // Bb4
+      { note: 466.16, dur: 0.26 }, // Bb4
+      { note: 440.00, dur: 0.65, chord: [174.61, 220.0, 349.23, 440.0] }, // A4 + F Major
+      { note: 349.23, dur: 0.65, chord: [174.61, 261.63, 349.23] }, // F4
+      { note: 392.00, dur: 0.65, chord: [130.81, 196.0, 261.63, 392.0] }, // G4 + C Major
+      { note: 349.23, dur: 2.4, chord: [87.31, 174.61, 261.63, 349.23, 440.0, 523.25] }, // F4 + Grand F Major
+      { note: 0, dur: 1.5 },
+    ];
+
+    let noteIdx = 0;
+
+    // Gentle warm background celesta drone
+    this.createDrone([174.61, 261.63], 0.035, "sine");
+
+    const playStep = () => {
+      if (!this.ctx || !this.musicGain || this.isMuted) return;
+      const item = melody[noteIdx];
+
+      if (item && item.note > 0) {
+        this.triggerBellTone(item.note, 0.22, Math.max(0.65, item.dur * 1.4));
+        this.triggerPluckedString(item.note, 0.12, item.dur * 0.9);
+
+        if (item.chord) {
+          item.chord.forEach((freq, chordI) => {
+            this.triggerPianoNote(freq, 0.08, 1.8);
+            if (chordI === 0) {
+              this.triggerBassNote(freq * 0.5, 0.13, 1.4);
+            }
+          });
+        }
+      }
+
+      noteIdx = (noteIdx + 1) % melody.length;
+      const nextDelay = (item ? item.dur : 0.5) * 1000;
+      this.synthInterval = window.setTimeout(playStep, nextDelay);
+    };
+
+    playStep();
+  }
+
+  private triggerBellTone(freq: number, volume: number, duration: number) {
+    if (!this.ctx || !this.musicGain) return;
+    const now = this.ctx.currentTime;
+
+    const osc1 = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+
+    osc1.type = "sine";
+    osc1.frequency.setValueAtTime(freq, now);
+
+    osc2.type = "triangle";
+    osc2.frequency.setValueAtTime(freq * 2.01, now);
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.linearRampToValueAtTime(volume * this.musicVolume, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.00001, now + duration);
+
+    osc1.connect(gain);
+    osc2.connect(gain);
+    gain.connect(this.musicGain);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + duration + 0.05);
+    osc2.stop(now + duration + 0.05);
   }
 
   // ─── Sound Generators & Synthesizers ─────────────────────────────────────────

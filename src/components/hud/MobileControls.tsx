@@ -7,6 +7,7 @@ import { useAppStore } from "@/store/useAppStore";
 
 export function MobileControls() {
   const isTouchDevice = usePlayerStore((s) => s.isTouchDevice);
+  const isInspectMode = usePlayerStore((s) => s.isInspectMode);
   const setIsTouchDevice = usePlayerStore((s) => s.setIsTouchDevice);
   const setMobileJoystick = usePlayerStore((s) => s.setMobileJoystick);
   const setMobileLookDelta = usePlayerStore((s) => s.setMobileLookDelta);
@@ -219,6 +220,63 @@ export function MobileControls() {
         >
           INTERACT
         </button>
+      )}
+
+      {/* Floating Vertical Fly Controls for Inspect Mode (Mobile) */}
+      {isInspectMode && (
+        <div
+          style={{
+            position: "fixed",
+            bottom: "calc(2rem + env(safe-area-inset-bottom, 0px))",
+            right: "calc(1.5rem + env(safe-area-inset-right, 0px))",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.6rem",
+            zIndex: 65,
+            pointerEvents: "auto",
+          }}
+        >
+          <button
+            onTouchStart={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "e" }))}
+            onTouchEnd={() => window.dispatchEvent(new KeyboardEvent("keyup", { key: "e" }))}
+            style={{
+              width: 54,
+              height: 54,
+              borderRadius: "50%",
+              background: "rgba(56, 189, 248, 0.3)",
+              border: "2px solid #38bdf8",
+              color: "#38bdf8",
+              fontSize: "1.3rem",
+              fontWeight: 800,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            title="Fly Up"
+          >
+            ▲
+          </button>
+          <button
+            onTouchStart={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "q" }))}
+            onTouchEnd={() => window.dispatchEvent(new KeyboardEvent("keyup", { key: "q" }))}
+            style={{
+              width: 54,
+              height: 54,
+              borderRadius: "50%",
+              background: "rgba(56, 189, 248, 0.3)",
+              border: "2px solid #38bdf8",
+              color: "#38bdf8",
+              fontSize: "1.3rem",
+              fontWeight: 800,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+            title="Fly Down"
+          >
+            ▼
+          </button>
+        </div>
       )}
     </>
   );

@@ -45,6 +45,9 @@ export function PlayerController() {
   const setMobileLookDelta = usePlayerStore((s) => s.setMobileLookDelta);
   const setIsTouchDevice = usePlayerStore((s) => s.setIsTouchDevice);
 
+  const isInspectMode = usePlayerStore((s) => s.isInspectMode);
+  const toggleInspectMode = usePlayerStore((s) => s.toggleInspectMode);
+
   const { camera, gl } = useThree();
 
   // Internal per-frame movement and orientation refs (NO React state per frame)
@@ -61,6 +64,10 @@ export function PlayerController() {
     a: false,
     s: false,
     d: false,
+    q: false,
+    e: false,
+    c: false,
+    space: false,
     shift: false,
   });
 
@@ -70,6 +77,10 @@ export function PlayerController() {
     a: 0,
     s: 0,
     d: 0,
+    q: 0,
+    e: 0,
+    c: 0,
+    space: 0,
   });
 
   // Reset player position when entering a new room
@@ -90,8 +101,21 @@ export function PlayerController() {
   // Keyboard and pointer event listeners
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't capture when typing in inputs
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
       const key = e.key ? e.key.toLowerCase() : "";
       const now = performance.now();
+
+      // [Y] Key toggles Inspect Mode (Flying 3D mode)
+      if (key === "y" || e.code === "KeyY") {
+        e.preventDefault();
+        toggleInspectMode();
+        return;
+      }
+
       if (key === "w" || e.code === "KeyW" || e.code === "ArrowUp") {
         keys.current.w = true;
         keyPressTime.current.w = now;
@@ -108,10 +132,26 @@ export function PlayerController() {
         keys.current.d = true;
         keyPressTime.current.d = now;
       }
+      if (key === "q" || e.code === "KeyQ") {
+        keys.current.q = true;
+        keyPressTime.current.q = now;
+      }
+      if (key === "c" || e.code === "KeyC") {
+        keys.current.c = true;
+        keyPressTime.current.c = now;
+      }
+      if (key === " " || e.code === "Space") {
+        keys.current.space = true;
+        keyPressTime.current.space = now;
+      }
+      if (key === "e" || e.code === "KeyE") {
+        keys.current.e = true;
+        keyPressTime.current.e = now;
+      }
       if (e.shiftKey || key === "shift" || e.code === "ShiftLeft" || e.code === "ShiftRight") keys.current.shift = true;
 
-      // E or Space to interact
-      if (key === "e" || e.code === "KeyE" || e.code === "Space") {
+      // E or Space to interact in standard FPP mode
+      if (!isInspectMode && (key === "e" || e.code === "KeyE" || e.code === "Space")) {
         if (!focusedTarget && !cinematicMode && activeInteractable) {
           e.preventDefault();
           triggerActiveInteraction();
@@ -138,6 +178,10 @@ export function PlayerController() {
       if (key === "a" || e.code === "KeyA" || e.code === "ArrowLeft") keys.current.a = false;
       if (key === "s" || e.code === "KeyS" || e.code === "ArrowDown") keys.current.s = false;
       if (key === "d" || e.code === "KeyD" || e.code === "ArrowRight") keys.current.d = false;
+      if (key === "q" || e.code === "KeyQ") keys.current.q = false;
+      if (key === "e" || e.code === "KeyE") keys.current.e = false;
+      if (key === "c" || e.code === "KeyC") keys.current.c = false;
+      if (key === " " || e.code === "Space") keys.current.space = false;
       if (!e.shiftKey && (key === "shift" || e.code === "ShiftLeft" || e.code === "ShiftRight")) keys.current.shift = false;
     };
 
@@ -206,11 +250,14 @@ export function PlayerController() {
 
   // Main per-frame movement and interaction update
   useFrame((_, delta) => {
-    // 1. Process mobile swipe look if present
+    // 1. Process mouse/mobile look pitch limits based on Inspect Mode
+    const minPitch = isInspectMode ? -Math.PI * 0.48 : MIN_PITCH;
+    const maxPitch = isInspectMode ? Math.PI * 0.48 : MAX_PITCH;
+
     if (mobileLookDelta.x !== 0 || mobileLookDelta.y !== 0) {
       yaw.current -= mobileLookDelta.x * MOUSE_SENSITIVITY * 1.5;
       pitch.current -= mobileLookDelta.y * MOUSE_SENSITIVITY * 1.5;
-      pitch.current = Math.max(MIN_PITCH, Math.min(MAX_PITCH, pitch.current));
+      pitch.current = Math.max(minPitch, Math.min(maxPitch, pitch.current));
       setMobileLookDelta(0, 0);
     }
 
@@ -222,6 +269,7 @@ export function PlayerController() {
     // 3. Calculate movement direction
     let moveForward = 0;
     let moveRight = 0;
+    let moveUp = 0;
 
     const now = performance.now();
     const tapWindow = 400; // ms minimum movement duration per tap
@@ -235,71 +283,109 @@ export function PlayerController() {
     if (isD) moveRight += 1;
     if (isA) moveRight -= 1;
 
+    // Inspect mode vertical flying controls (Space/E: Up, Q/C: Down)
+    if (isInspectMode) {
+      const isUp = keys.current.space || keys.current.e || (now - keyPressTime.current.space < tapWindow) || (now - keyPressTime.current.e < tapWindow);
+      const isDown = keys.current.q || keys.current.c || (now - keyPressTime.current.q < tapWindow) || (now - keyPressTime.current.c < tapWindow);
+      if (isUp) moveUp += 1;
+      if (isDown) moveUp -= 1;
+    }
+
     // Add mobile joystick input
     if (mobileJoystick.y !== 0) moveForward -= mobileJoystick.y;
     if (mobileJoystick.x !== 0) moveRight += mobileJoystick.x;
 
-    const speed = keys.current.shift ? SPRINT_SPEED : WALK_SPEED;
+    const baseSpeed = isInspectMode ? 5.5 : WALK_SPEED;
+    const sprintSpeed = isInspectMode ? 11.0 : SPRINT_SPEED;
+    const speed = keys.current.shift ? sprintSpeed : baseSpeed;
 
-    // Compute forward and right unit vectors relative to current camera yaw
-    const forwardX = -Math.sin(yaw.current);
-    const forwardZ = -Math.cos(yaw.current);
-    const rightX = Math.cos(yaw.current);
-    const rightZ = -Math.sin(yaw.current);
+    if (isInspectMode) {
+      // ─── 6DOF Flying in all directions X, Y, Z ───
+      // Forward vector follows exact 3D camera look angle (including pitch)
+      const fX = -Math.sin(yaw.current) * Math.cos(pitch.current);
+      const fY = Math.sin(pitch.current);
+      const fZ = -Math.cos(yaw.current) * Math.cos(pitch.current);
 
-    const dirX = forwardX * moveForward + rightX * moveRight;
-    const dirZ = forwardZ * moveForward + rightZ * moveRight;
-    const len = Math.hypot(dirX, dirZ);
+      // Horizontal right vector for strafing
+      const rX = Math.cos(yaw.current);
+      const rZ = -Math.sin(yaw.current);
 
-    if (len > 0.0001) {
-      const normX = dirX / len;
-      const normZ = dirZ / len;
-      playerPos.current.x += normX * speed * delta;
-      playerPos.current.z += normZ * speed * delta;
+      const dX = fX * moveForward + rX * moveRight;
+      const dY = fY * moveForward + moveUp;
+      const dZ = fZ * moveForward + rZ * moveRight;
 
-      // Play subtle archival footstep sound (internally throttled to ~320ms)
-      soundEngine.playFootstep();
+      const len = Math.hypot(dX, dY, dZ);
+      if (len > 0.0001) {
+        playerPos.current.x += (dX / len) * speed * delta;
+        playerPos.current.y += (dY / len) * speed * delta;
+        playerPos.current.z += (dZ / len) * speed * delta;
 
-      // Room boundary clamping (keep player inside room)
-      let boundX = 7.2;
-      let boundZ = 7.2;
-      if (currentRoom === "HUB") {
-        boundX = 9.2;
-        boundZ = 9.2;
-      } else if (currentRoom === "HER_GALLERY") {
-        boundX = 9.8;
-        boundZ = 14.8;
-      } else if (currentRoom === "VERSIONS") {
-        boundX = 8.8;
-        boundZ = 12.8;
-      } else if (currentRoom === "EVIDENCE") {
-        boundX = 9.8;
-        boundZ = 9.8;
-      } else if (currentRoom === "DISTANCE") {
-        boundX = 3.6;
-        boundZ = 10.0;
-      } else if (currentRoom === "LITTLE_THINGS") {
-        boundX = 7.4;
-        boundZ = 7.4;
-      } else if (currentRoom === "MAIN_CHARACTER") {
-        boundX = 8.4;
-        boundZ = 8.4;
-      } else if (currentRoom === "FUTURE") {
-        boundX = 8.6;
-        boundZ = 8.6;
-      } else if (currentRoom === "FINAL") {
-        boundX = 5.2;
-        boundZ = 5.2;
+        // Flying bounds (generously open for full room/dome inspection)
+        playerPos.current.x = Math.max(-20.0, Math.min(20.0, playerPos.current.x));
+        playerPos.current.y = Math.max(0.3, Math.min(22.0, playerPos.current.y));
+        playerPos.current.z = Math.max(-20.0, Math.min(20.0, playerPos.current.z));
       }
+    } else {
+      // ─── Standard FPP Ground Walking ───
+      const forwardX = -Math.sin(yaw.current);
+      const forwardZ = -Math.cos(yaw.current);
+      const rightX = Math.cos(yaw.current);
+      const rightZ = -Math.sin(yaw.current);
 
-      if (currentRoom === "DISTANCE") {
-        playerPos.current.x = Math.max(-boundX, Math.min(boundX, playerPos.current.x));
-        playerPos.current.z = Math.max(0.6, Math.min(10.0, playerPos.current.z));
-      } else {
-        playerPos.current.x = Math.max(-boundX, Math.min(boundX, playerPos.current.x));
-        playerPos.current.z = Math.max(-boundZ, Math.min(boundZ, playerPos.current.z));
+      const dirX = forwardX * moveForward + rightX * moveRight;
+      const dirZ = forwardZ * moveForward + rightZ * moveRight;
+      const len = Math.hypot(dirX, dirZ);
+
+      if (len > 0.0001) {
+        const normX = dirX / len;
+        const normZ = dirZ / len;
+        playerPos.current.x += normX * speed * delta;
+        playerPos.current.z += normZ * speed * delta;
+
+        // Play subtle archival footstep sound (internally throttled to ~320ms)
+        soundEngine.playFootstep();
+
+        // Room boundary clamping (keep player inside room)
+        let boundX = 7.2;
+        let boundZ = 7.2;
+        if (currentRoom === "HUB") {
+          boundX = 9.2;
+          boundZ = 9.2;
+        } else if (currentRoom === "HER_GALLERY") {
+          boundX = 9.8;
+          boundZ = 14.8;
+        } else if (currentRoom === "VERSIONS") {
+          boundX = 8.8;
+          boundZ = 12.8;
+        } else if (currentRoom === "EVIDENCE") {
+          boundX = 9.8;
+          boundZ = 9.8;
+        } else if (currentRoom === "DISTANCE") {
+          boundX = 3.6;
+          boundZ = 10.0;
+        } else if (currentRoom === "LITTLE_THINGS") {
+          boundX = 7.4;
+          boundZ = 7.4;
+        } else if (currentRoom === "MAIN_CHARACTER") {
+          boundX = 8.4;
+          boundZ = 8.4;
+        } else if (currentRoom === "FUTURE") {
+          boundX = 8.6;
+          boundZ = 8.6;
+        } else if (currentRoom === "FINAL") {
+          boundX = 5.2;
+          boundZ = 5.2;
+        }
+
+        if (currentRoom === "DISTANCE") {
+          playerPos.current.x = Math.max(-boundX, Math.min(boundX, playerPos.current.x));
+          playerPos.current.z = Math.max(0.6, Math.min(10.0, playerPos.current.z));
+        } else {
+          playerPos.current.x = Math.max(-boundX, Math.min(boundX, playerPos.current.x));
+          playerPos.current.z = Math.max(-boundZ, Math.min(boundZ, playerPos.current.z));
+        }
+        playerPos.current.y = 1.8; // Player eye height
       }
-      playerPos.current.y = 1.8; // Player eye height
     }
 
     // 4. Update camera position and orientation

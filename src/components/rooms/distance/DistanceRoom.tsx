@@ -4,59 +4,61 @@ import { Stars } from "@react-three/drei";
 import { EarthGlobe } from "./EarthGlobe";
 import { ObservatoryCorridor } from "./ObservatoryCorridor";
 import { ObservationBalcony } from "./ObservationBalcony";
+import { useAppStore } from "@/store/useAppStore";
 
-/**
- * DistanceRoom — The Showcase Observation Chamber.
- * Per SPEC.md Section 52:
- * "Distance (the showcase): corridor to window, room fades, optimized Earth globe
- * with atmosphere shader, stars, restrained bloom, two city-level points, animated arc,
- * text 'THAT'S THE DISTANCE.' then 'NOT THE FEELING.', camera pulls away, line remains.
- * Fallback to animated SVG map on LOW or no WebGL. Show computed distance only if both cities are supplied."
- */
 export default function DistanceRoom() {
+  const lightingMode = useAppStore((s) => s.lightingMode);
+  const isLight = lightingMode === "normal";
+
   return (
     <group>
-      {/* ─── Celestial Observatory Starfield ─────────────────────── */}
+      {/* ─── Vast Celestial Observatory Starfield (Expansive Cosmos) ─── */}
       <Stars
-        radius={80}
-        depth={50}
-        count={3500}
-        factor={4}
-        saturation={0}
+        radius={140}
+        depth={80}
+        count={5500}
+        factor={4.8}
+        saturation={0.3}
         fade
-        speed={1.2}
+        speed={1.4}
       />
 
-      {/* ─── Ambient & Cosmic Lighting ───────────────────────────── */}
-      {/* Deep celestial void ambient illumination */}
-      <ambientLight intensity={0.25} color="#0c192c" />
+      {/* ─── Ambient & Cosmic Lighting (Bright in Normal Mode) ─── */}
+      <ambientLight
+        intensity={isLight ? 0.95 : 0.35}
+        color={isLight ? "#e0f2fe" : "#0c192c"}
+      />
 
-      {/* Warm archival observatory key light */}
+      {/* Key Starlight & Observatory Illuminator */}
       <directionalLight
-        position={[2, 6, 4]}
-        intensity={0.55}
-        color="#fef3c7"
+        position={[4, 10, 6]}
+        intensity={isLight ? 1.4 : 0.65}
+        color="#fffbeb"
         castShadow
         shadow-mapSize-width={1024}
         shadow-mapSize-height={1024}
       />
 
-      {/* Distant starlight illumination on the globe */}
+      {/* Brilliant Cosmic Rim Light on the Earth */}
       <directionalLight
-        position={[-5, 3, -8]}
-        intensity={0.4}
+        position={[-8, 6, -10]}
+        intensity={isLight ? 1.1 : 0.55}
         color="#38bdf8"
       />
 
+      {/* Deep Space Celestial Nebula Fill Pointlights */}
+      <pointLight position={[0, 12, -14]} intensity={isLight ? 1.6 : 0.8} color="#0284c7" distance={35} />
+      <pointLight position={[0, -8, -10]} intensity={isLight ? 1.4 : 0.7} color="#f59e0b" distance={30} />
+
       {/* ─── Architectural Components ────────────────────────────── */}
-      {/* Entrance Corridor leading from Hub (z: 10.5 -> 2.0) */}
+      {/* Entrance Corridor leading from Hub */}
       <ObservatoryCorridor />
 
       {/* Observation Balcony with Telemetry Console, Telescope, and Reveal Typography */}
       <ObservationBalcony />
 
-      {/* 3D Archival Earth Globe with Flight Arc & Holographic Beacons */}
-      <EarthGlobe position={[0, 2.4, -5.0]} />
+      {/* 3D Archival Earth Globe with Flight Arc, Holographic Beacons & Zoom */}
+      <EarthGlobe position={[0, 2.6, -5.6]} />
     </group>
   );
 }

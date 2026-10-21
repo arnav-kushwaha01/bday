@@ -2,7 +2,7 @@
 
 import { useRef, useMemo, useEffect, useState } from "react";
 import { useFrame, ThreeEvent } from "@react-three/fiber";
-import { Text } from "@react-three/drei";
+import { Text, Billboard } from "@react-three/drei";
 import * as THREE from "three";
 import { useTransitionStore } from "@/engine/transitions/transitionStore";
 import { THEME } from "@/lib/theme";
@@ -352,6 +352,11 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
   const hasMovedRef = useRef(false);
   const [isHovered, setIsHovered] = useState(false);
 
+  // Zoom in / out state (smoothly lerped)
+  const targetZoomRef = useRef(1.0);
+  const currentZoomRef = useRef(1.0);
+  const [zoomPercent, setZoomPercent] = useState(100);
+
   // Archival Texture
   const earthTexture = useMemo(() => createArchivalEarthTexture(), []);
 
@@ -363,7 +368,7 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
   // Arc Curve (Quadratic Bezier curving above sphere: Kanpur -> CDAC Bangalore)
   const { arcCurve, apexPos } = useMemo(() => {
     const mid = herHomePos.clone().add(cdacPos).multiplyScalar(0.5);
-    const apex = mid.clone().normalize().multiplyScalar(GLOBE_RADIUS + 0.42);
+    const apex = mid.clone().normalize().multiplyScalar(GLOBE_RADIUS + 0.5);
     const curve = new THREE.QuadraticBezierCurve3(herHomePos, apex, cdacPos);
     return { arcCurve: curve, apexPos: apex };
   }, [herHomePos, cdacPos]);
@@ -371,7 +376,7 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
   // Local Kanpur connection arc between Her Home & His Home
   const localKanpurCurve = useMemo(() => {
     const mid = herHomePos.clone().add(hisHomePos).multiplyScalar(0.5);
-    const apex = mid.clone().normalize().multiplyScalar(GLOBE_RADIUS + 0.08);
+    const apex = mid.clone().normalize().multiplyScalar(GLOBE_RADIUS + 0.12);
     return new THREE.QuadraticBezierCurve3(herHomePos, apex, hisHomePos);
   }, [herHomePos, hisHomePos]);
 
@@ -380,7 +385,7 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
   const hisHomeNormal = useMemo(() => hisHomePos.clone().normalize(), [hisHomePos]);
   const cdacNormal = useMemo(() => cdacPos.clone().normalize(), [cdacPos]);
 
-  // Global window listeners for drag rotation
+  // Global window listeners for drag rotation & mouse wheel zoom
   useEffect(() => {
     const handleWindowPointerMove = (e: PointerEvent) => {
       if (!isDraggingRef.current) return;
@@ -397,7 +402,7 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
       rotRef.current.x += dy * rotSpeed;
 
       // Clamp vertical tilt so Earth remains upright
-      rotRef.current.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, rotRef.current.x));
+      rotRef.current.x = Math.max(-Math.PI / 2.8, Math.min(Math.PI / 2.8, rotRef.current.x));
 
       velRef.current = {
         x: dy * rotSpeed * 0.4,
@@ -415,12 +420,53 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
       }
     };
 
+    // Zoom on wheel scroll
+    const handleWheel = (e: WheelEvent) => {
+      // Scale zoom level smoothly
+      targetZoomRef.current = THREE.MathUtils.clamp(
+        targetZoomRef.current - e.deltaY * 0.0016,
+        0.65,
+        2.5
+      );
+      setZoomPercent(Math.round(targetZoomRef.current * 100));
+    };
+
+    // Expose global zoom functions for HUD controls
+    if (typeof window !== "undefined") {
+      (window as unknown as {
+        __ZOOM_GLOBE_IN__?: () => void;
+        __ZOOM_GLOBE_OUT__?: () => void;
+        __RESET_GLOBE_ZOOM__?: () => void;
+      }).__ZOOM_GLOBE_IN__ = () => {
+        targetZoomRef.current = THREE.MathUtils.clamp(targetZoomRef.current + 0.25, 0.65, 2.5);
+        setZoomPercent(Math.round(targetZoomRef.current * 100));
+      };
+      (window as unknown as {
+        __ZOOM_GLOBE_IN__?: () => void;
+        __ZOOM_GLOBE_OUT__?: () => void;
+        __RESET_GLOBE_ZOOM__?: () => void;
+      }).__ZOOM_GLOBE_OUT__ = () => {
+        targetZoomRef.current = THREE.MathUtils.clamp(targetZoomRef.current - 0.25, 0.65, 2.5);
+        setZoomPercent(Math.round(targetZoomRef.current * 100));
+      };
+      (window as unknown as {
+        __ZOOM_GLOBE_IN__?: () => void;
+        __ZOOM_GLOBE_OUT__?: () => void;
+        __RESET_GLOBE_ZOOM__?: () => void;
+      }).__RESET_GLOBE_ZOOM__ = () => {
+        targetZoomRef.current = 1.0;
+        setZoomPercent(100);
+      };
+    }
+
     window.addEventListener("pointermove", handleWindowPointerMove);
     window.addEventListener("pointerup", handleWindowPointerUp);
+    window.addEventListener("wheel", handleWheel, { passive: true });
 
     return () => {
       window.removeEventListener("pointermove", handleWindowPointerMove);
       window.removeEventListener("pointerup", handleWindowPointerUp);
+      window.removeEventListener("wheel", handleWheel);
     };
   }, []);
 
@@ -444,7 +490,7 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
     }
   };
 
-  // Animation frame: pulse packets along curve and rotate globe
+  // Animation frame: pulse packets along curve, rotate globe, and smoothly lerp zoom
   useFrame(({ clock }, delta) => {
     const time = clock.getElapsedTime();
 
@@ -453,7 +499,7 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
       const t1 = (time * 0.45) % 1;
       const pt1 = arcCurve.getPoint(t1);
       pulsePacket1Ref.current.position.copy(pt1);
-      const scale1 = Math.sin(t1 * Math.PI) * 0.08 + 0.04;
+      const scale1 = Math.sin(t1 * Math.PI) * 0.09 + 0.04;
       pulsePacket1Ref.current.scale.set(scale1, scale1, scale1);
     }
 
@@ -462,7 +508,7 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
       const t2 = 1 - ((time * 0.45 + 0.5) % 1);
       const pt2 = arcCurve.getPoint(t2);
       pulsePacket2Ref.current.position.copy(pt2);
-      const scale2 = Math.sin((1 - t2) * Math.PI) * 0.08 + 0.04;
+      const scale2 = Math.sin((1 - t2) * Math.PI) * 0.09 + 0.04;
       pulsePacket2Ref.current.scale.set(scale2, scale2, scale2);
     }
 
@@ -481,15 +527,51 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
       rotRef.current.x += (0 - rotRef.current.x) * 0.02;
     }
 
+    // Smooth Zoom Lerp
+    currentZoomRef.current = THREE.MathUtils.lerp(
+      currentZoomRef.current,
+      targetZoomRef.current,
+      0.12
+    );
+
     if (globeGroupRef.current) {
       globeGroupRef.current.rotation.y = rotRef.current.y;
       globeGroupRef.current.rotation.x = rotRef.current.x;
+      globeGroupRef.current.scale.setScalar(currentZoomRef.current);
     }
   });
 
   return (
     <group position={position}>
-      {/* ─── Main Rotating Globe & Markers Group ─────────────────── */}
+      {/* ─── Outer Astrolabe Celestial Orbit Armature (Expansive Cosmic Feel) ─── */}
+      <group>
+        {/* Equatorial Astrolabe Brass Ring */}
+        <mesh rotation={[Math.PI / 3.2, 0.25, 0]}>
+          <torusGeometry args={[GLOBE_RADIUS * 1.48, 0.022, 16, 100]} />
+          <meshStandardMaterial
+            color={THEME.evidence.primary}
+            metalness={0.9}
+            roughness={0.2}
+            emissive={THEME.evidence.primary}
+            emissiveIntensity={0.65}
+          />
+        </mesh>
+        {/* Polar Celestial Coordinate Ring */}
+        <mesh rotation={[0, Math.PI / 4, 0]}>
+          <torusGeometry args={[GLOBE_RADIUS * 1.55, 0.014, 12, 100]} />
+          <meshStandardMaterial
+            color="#38bdf8"
+            metalness={0.8}
+            roughness={0.3}
+            emissive="#38bdf8"
+            emissiveIntensity={0.4}
+            transparent
+            opacity={0.6}
+          />
+        </mesh>
+      </group>
+
+      {/* ─── Main Rotating Globe & Markers Group (Scales with Zoom) ─── */}
       <group ref={globeGroupRef}>
         {/* Central Earth Sphere (Interactive with pointer drag) */}
         <mesh
@@ -508,8 +590,8 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
           {earthTexture ? (
             <meshStandardMaterial
               map={earthTexture}
-              roughness={0.42}
-              metalness={0.2}
+              roughness={0.38}
+              metalness={0.22}
               toneMapped={false}
             />
           ) : (
@@ -523,7 +605,7 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
           <meshStandardMaterial
             color="#38bdf8"
             transparent
-            opacity={0.12}
+            opacity={0.16}
             side={THREE.BackSide}
             blending={THREE.AdditiveBlending}
           />
@@ -531,22 +613,22 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
 
         {/* ─── 3D Great-Circle Flight Arc (Kanpur ◄——► CDAC Bangalore) ── */}
         <mesh>
-          <tubeGeometry args={[arcCurve, 48, 0.022, 8, false]} />
+          <tubeGeometry args={[arcCurve, 64, 0.026, 8, false]} />
           <meshStandardMaterial
             color={THEME.evidence.primary}
             emissive={THEME.evidence.primary}
-            emissiveIntensity={1.8}
+            emissiveIntensity={2.2}
             roughness={0.2}
           />
         </mesh>
 
         {/* Local Kanpur Connection Arc (Her Home ◄——► His Home) */}
         <mesh>
-          <tubeGeometry args={[localKanpurCurve, 16, 0.012, 6, false]} />
+          <tubeGeometry args={[localKanpurCurve, 20, 0.016, 6, false]} />
           <meshStandardMaterial
             color="#fbbf24"
             emissive="#fbbf24"
-            emissiveIntensity={2.0}
+            emissiveIntensity={2.5}
             roughness={0.2}
           />
         </mesh>
@@ -555,43 +637,63 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
         <mesh ref={pulsePacket1Ref}>
           <sphereGeometry args={[1, 16, 16]} />
           <meshBasicMaterial color="#ffffff" />
-          <pointLight color="#fef08a" intensity={0.9} distance={1.2} />
+          <pointLight color="#fef08a" intensity={1.2} distance={1.8} />
         </mesh>
 
         {/* Pulse Packet 2 (CDAC Bangalore -> Kanpur) */}
         <mesh ref={pulsePacket2Ref}>
           <sphereGeometry args={[1, 16, 16]} />
           <meshBasicMaterial color="#38bdf8" />
-          <pointLight color="#38bdf8" intensity={0.9} distance={1.2} />
+          <pointLight color="#38bdf8" intensity={1.2} distance={1.8} />
         </mesh>
 
-        {/* Floating Distance Badge at Arc Apex */}
-        <group position={[apexPos.x, apexPos.y + 0.22, apexPos.z]}>
-          <mesh position={[0, 0, -0.02]}>
-            <planeGeometry args={[1.35, 0.44]} />
-            <meshBasicMaterial color="#080605" transparent opacity={0.88} />
-          </mesh>
-          <Text
-            position={[0, 0.09, 0]}
-            fontSize={0.14}
-            color={THEME.evidence.primary}
-            anchorX="center"
-            anchorY="middle"
-            fontWeight={900}
-            letterSpacing={0.12}
-          >
-            1,540 KM
-          </Text>
-          <Text
-            position={[0, -0.05, 0]}
-            fontSize={0.055}
-            color="#fef3c7"
-            anchorX="center"
-            anchorY="middle"
-            letterSpacing={0.2}
-          >
-            KANPUR ◄——► CDAC BANGALORE
-          </Text>
+        {/* ─── Floating Distance Badge at Arc Apex (Billboard: ALWAYS CAMERA FACING) ─── */}
+        <group position={[apexPos.x, apexPos.y + 0.32, apexPos.z]}>
+          <Billboard follow={true}>
+            {/* Dark background plate */}
+            <mesh position={[0, 0, -0.02]}>
+              <planeGeometry args={[2.5, 0.72]} />
+              <meshBasicMaterial color="#080605" transparent opacity={0.94} />
+            </mesh>
+            {/* Glowing border frame */}
+            <mesh position={[0, 0, -0.019]}>
+              <planeGeometry args={[2.54, 0.76]} />
+              <meshBasicMaterial color={THEME.evidence.primary} transparent opacity={0.65} />
+            </mesh>
+            <Text
+              position={[0, 0.16, 0]}
+              fontSize={0.20}
+              color={THEME.evidence.primary}
+              anchorX="center"
+              anchorY="middle"
+              fontWeight={900}
+              letterSpacing={0.12}
+            >
+              1,540 KM
+            </Text>
+            <Text
+              position={[0, -0.04, 0]}
+              fontSize={0.088}
+              color="#fef3c7"
+              anchorX="center"
+              anchorY="middle"
+              fontWeight={700}
+              letterSpacing={0.16}
+            >
+              KANPUR ◄——► CDAC BANGALORE
+            </Text>
+            <Text
+              position={[0, -0.22, 0]}
+              fontSize={0.068}
+              color={THEME.classified.bright}
+              anchorX="center"
+              anchorY="middle"
+              fontWeight={800}
+              letterSpacing={0.18}
+            >
+              {"THAT'S THE DISTANCE. NOT THE FEELING."}
+            </Text>
+          </Billboard>
         </group>
 
         {/* ─── 1. Her Home Marker & Hologram (Kanpur) ────────────────── */}
@@ -600,50 +702,58 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
           onClick={(e) => handleMarkerClick(e, "dist-kanpur")}
           onPointerDown={handleGlobePointerDown}
         >
-          <mesh position={[herHomeNormal.x * 0.16, herHomeNormal.y * 0.16, herHomeNormal.z * 0.16]}>
-            <sphereGeometry args={[0.075, 16, 16]} />
-            <meshStandardMaterial color="#eab308" emissive="#eab308" emissiveIntensity={3.0} />
+          {/* Glowing Pin Beacon */}
+          <mesh position={[herHomeNormal.x * 0.18, herHomeNormal.y * 0.18, herHomeNormal.z * 0.18]}>
+            <sphereGeometry args={[0.085, 16, 16]} />
+            <meshStandardMaterial color="#eab308" emissive="#eab308" emissiveIntensity={3.5} />
           </mesh>
-          <pointLight color="#eab308" intensity={1.8} distance={2.5} />
+          <pointLight color="#eab308" intensity={2.0} distance={3.0} />
 
-          {/* 3D Floating City Tag */}
-          <group position={[0.22, 0.22, 0.15]}>
-            <mesh position={[0, 0, -0.01]}>
-              <planeGeometry args={[1.65, 0.46]} />
-              <meshBasicMaterial color="#080605" transparent opacity={0.88} />
-            </mesh>
-            <Text
-              position={[0, 0.1, 0]}
-              fontSize={0.08}
-              color="#eab308"
-              anchorX="center"
-              anchorY="middle"
-              fontWeight={800}
-              letterSpacing={0.1}
-            >
-              HER HOME [KANPUR]
-            </Text>
-            <Text
-              position={[0, 0.0, 0]}
-              fontSize={0.052}
-              color="#fef3c7"
-              anchorX="center"
-              anchorY="middle"
-              letterSpacing={0.1}
-            >
-              26.45° N, 80.33° E • HER ROOTS
-            </Text>
-            <Text
-              position={[0, -0.1, 0]}
-              fontSize={0.046}
-              color={THEME.classified.bright}
-              anchorX="center"
-              anchorY="middle"
-              fontWeight={700}
-              letterSpacing={0.15}
-            >
-              25 OCT 2003 • 23 YEARS
-            </Text>
+          {/* Always Camera-Facing Readable City Tag */}
+          <group position={[herHomeNormal.x * 0.42, herHomeNormal.y * 0.42 + 0.16, herHomeNormal.z * 0.42]}>
+            <Billboard follow={true}>
+              <mesh position={[0, 0, -0.02]}>
+                <planeGeometry args={[2.5, 0.78]} />
+                <meshBasicMaterial color="#060504" transparent opacity={0.95} />
+              </mesh>
+              <mesh position={[0, 0, -0.019]}>
+                <planeGeometry args={[2.54, 0.82]} />
+                <meshBasicMaterial color="#eab308" transparent opacity={0.7} />
+              </mesh>
+              <Text
+                position={[0, 0.22, 0]}
+                fontSize={0.125}
+                color="#facc15"
+                anchorX="center"
+                anchorY="middle"
+                fontWeight={900}
+                letterSpacing={0.12}
+              >
+                HER HOME [KANPUR]
+              </Text>
+              <Text
+                position={[0, 0.02, 0]}
+                fontSize={0.076}
+                color="#fef3c7"
+                anchorX="center"
+                anchorY="middle"
+                fontWeight={700}
+                letterSpacing={0.1}
+              >
+                26.45° N, 80.33° E • HER ROOTS
+              </Text>
+              <Text
+                position={[0, -0.18, 0]}
+                fontSize={0.070}
+                color={THEME.classified.bright}
+                anchorX="center"
+                anchorY="middle"
+                fontWeight={800}
+                letterSpacing={0.14}
+              >
+                25 OCT 2003 • 23 YEARS
+              </Text>
+            </Billboard>
           </group>
         </group>
 
@@ -653,39 +763,58 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
           onClick={(e) => handleMarkerClick(e, "dist-arnav-home")}
           onPointerDown={handleGlobePointerDown}
         >
-          <mesh position={[hisHomeNormal.x * 0.14, hisHomeNormal.y * 0.14, hisHomeNormal.z * 0.14]}>
-            <sphereGeometry args={[0.065, 16, 16]} />
-            <meshStandardMaterial color="#f97316" emissive="#f97316" emissiveIntensity={2.8} />
+          {/* Glowing Pin Beacon */}
+          <mesh position={[hisHomeNormal.x * 0.16, hisHomeNormal.y * 0.16, hisHomeNormal.z * 0.16]}>
+            <sphereGeometry args={[0.075, 16, 16]} />
+            <meshStandardMaterial color="#f97316" emissive="#f97316" emissiveIntensity={3.2} />
           </mesh>
-          <pointLight color="#f97316" intensity={1.2} distance={2.0} />
+          <pointLight color="#f97316" intensity={1.6} distance={2.4} />
 
-          {/* 3D Floating Tag */}
-          <group position={[-0.25, 0.18, 0.12]}>
-            <mesh position={[0, 0, -0.01]}>
-              <planeGeometry args={[1.5, 0.4]} />
-              <meshBasicMaterial color="#080605" transparent opacity={0.88} />
-            </mesh>
-            <Text
-              position={[0, 0.08, 0]}
-              fontSize={0.075}
-              color="#f97316"
-              anchorX="center"
-              anchorY="middle"
-              fontWeight={800}
-              letterSpacing={0.1}
-            >
-              ARNAV&apos;S HOME [KANPUR]
-            </Text>
-            <Text
-              position={[0, -0.04, 0]}
-              fontSize={0.048}
-              color="#fef3c7"
-              anchorX="center"
-              anchorY="middle"
-              letterSpacing={0.1}
-            >
-              ORIGIN BASE • SCOOTY & DATES
-            </Text>
+          {/* Always Camera-Facing Readable City Tag */}
+          <group position={[hisHomeNormal.x * 0.42, hisHomeNormal.y * 0.42 + 0.16, hisHomeNormal.z * 0.42]}>
+            <Billboard follow={true}>
+              <mesh position={[0, 0, -0.02]}>
+                <planeGeometry args={[2.5, 0.76]} />
+                <meshBasicMaterial color="#060504" transparent opacity={0.95} />
+              </mesh>
+              <mesh position={[0, 0, -0.019]}>
+                <planeGeometry args={[2.54, 0.80]} />
+                <meshBasicMaterial color="#f97316" transparent opacity={0.7} />
+              </mesh>
+              <Text
+                position={[0, 0.20, 0]}
+                fontSize={0.12}
+                color="#f97316"
+                anchorX="center"
+                anchorY="middle"
+                fontWeight={900}
+                letterSpacing={0.12}
+              >
+                ARNAV&apos;S HOME [KANPUR]
+              </Text>
+              <Text
+                position={[0, 0.01, 0]}
+                fontSize={0.074}
+                color="#fef3c7"
+                anchorX="center"
+                anchorY="middle"
+                fontWeight={700}
+                letterSpacing={0.1}
+              >
+                26.45° N, 80.35° E • ORIGIN BASE
+              </Text>
+              <Text
+                position={[0, -0.17, 0]}
+                fontSize={0.068}
+                color="#fdba74"
+                anchorX="center"
+                anchorY="middle"
+                fontWeight={700}
+                letterSpacing={0.12}
+              >
+                SCOOTY RIDES &amp; DATE NIGHTS
+              </Text>
+            </Billboard>
           </group>
         </group>
 
@@ -695,84 +824,100 @@ export function EarthGlobe({ position = [0, 2.4, -5.0] }: { position?: [number, 
           onClick={(e) => handleMarkerClick(e, "dist-bangalore")}
           onPointerDown={handleGlobePointerDown}
         >
-          <mesh position={[cdacNormal.x * 0.16, cdacNormal.y * 0.16, cdacNormal.z * 0.16]}>
-            <sphereGeometry args={[0.075, 16, 16]} />
-            <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={3.0} />
+          {/* Glowing Pin Beacon */}
+          <mesh position={[cdacNormal.x * 0.18, cdacNormal.y * 0.18, cdacNormal.z * 0.18]}>
+            <sphereGeometry args={[0.085, 16, 16]} />
+            <meshStandardMaterial color="#38bdf8" emissive="#38bdf8" emissiveIntensity={3.5} />
           </mesh>
-          <pointLight color="#38bdf8" intensity={1.8} distance={2.5} />
+          <pointLight color="#38bdf8" intensity={2.0} distance={3.0} />
 
-          {/* 3D Floating City Tag */}
-          <group position={[0.26, -0.22, 0.15]}>
-            <mesh position={[0, 0, -0.01]}>
-              <planeGeometry args={[1.8, 0.46]} />
-              <meshBasicMaterial color="#080605" transparent opacity={0.88} />
-            </mesh>
-            <Text
-              position={[0, 0.1, 0]}
-              fontSize={0.08}
-              color="#38bdf8"
-              anchorX="center"
-              anchorY="middle"
-              fontWeight={800}
-              letterSpacing={0.1}
-            >
-              CDAC HOSTEL [BANGALORE]
-            </Text>
-            <Text
-              position={[0, 0.0, 0]}
-              fontSize={0.052}
-              color="#fef3c7"
-              anchorX="center"
-              anchorY="middle"
-              letterSpacing={0.1}
-            >
-              12.85° N, 77.66° E • 6-MONTH DIPLOMA
-            </Text>
-            <Text
-              position={[0, -0.1, 0]}
-              fontSize={0.046}
-              color="#38bdf8"
-              anchorX="center"
-              anchorY="middle"
-              letterSpacing={0.12}
-            >
-              CURRENT POST • STUDYING & COUNTING DAYS
-            </Text>
+          {/* Always Camera-Facing Readable City Tag */}
+          <group position={[cdacNormal.x * 0.42, cdacNormal.y * 0.42 - 0.16, cdacNormal.z * 0.42]}>
+            <Billboard follow={true}>
+              <mesh position={[0, 0, -0.02]}>
+                <planeGeometry args={[2.7, 0.8]} />
+                <meshBasicMaterial color="#060504" transparent opacity={0.95} />
+              </mesh>
+              <mesh position={[0, 0, -0.019]}>
+                <planeGeometry args={[2.74, 0.84]} />
+                <meshBasicMaterial color="#38bdf8" transparent opacity={0.7} />
+              </mesh>
+              <Text
+                position={[0, 0.22, 0]}
+                fontSize={0.125}
+                color="#38bdf8"
+                anchorX="center"
+                anchorY="middle"
+                fontWeight={900}
+                letterSpacing={0.12}
+              >
+                CDAC HOSTEL [BANGALORE]
+              </Text>
+              <Text
+                position={[0, 0.02, 0]}
+                fontSize={0.076}
+                color="#fef3c7"
+                anchorX="center"
+                anchorY="middle"
+                fontWeight={700}
+                letterSpacing={0.1}
+              >
+                12.85° N, 77.66° E • 6-MONTH DIPLOMA
+              </Text>
+              <Text
+                position={[0, -0.18, 0]}
+                fontSize={0.070}
+                color="#7dd3fc"
+                anchorX="center"
+                anchorY="middle"
+                fontWeight={700}
+                letterSpacing={0.12}
+              >
+                CURRENT POST • STUDYING &amp; WAITING
+              </Text>
+            </Billboard>
           </group>
         </group>
       </group>
 
-      {/* ─── Interactive Rotate Hint Plaque Below Globe ───────────── */}
-      <group position={[0, -0.05, -3.8]}>
-        <mesh position={[0, 0, -0.02]}>
-          <planeGeometry args={[3.2, 0.44]} />
-          <meshBasicMaterial
-            color={isHovered ? "#181411" : "#0c0a08"}
-            transparent
-            opacity={0.9}
-          />
-        </mesh>
-        <Text
-          position={[0, 0.06, 0]}
-          fontSize={0.085}
-          color={isHovered ? THEME.evidence.primary : "#e2d9cc"}
-          anchorX="center"
-          anchorY="middle"
-          fontWeight={800}
-          letterSpacing={0.18}
-        >
-          ✦ HOLD &amp; DRAG TO ROTATE EARTH • 360° ARCHIVAL VIEW ✦
-        </Text>
-        <Text
-          position={[0, -0.08, 0]}
-          fontSize={0.052}
-          color="#9c7a4c"
-          anchorX="center"
-          anchorY="middle"
-          letterSpacing={0.15}
-        >
-          CLICK PINS TO INSPECT HER HOME, HIS HOME &amp; CDAC HOSTEL
-        </Text>
+      {/* ─── Interactive Rotate & Zoom Hint Plaque Below Globe ───────────── */}
+      <group position={[0, -0.1, -3.6]}>
+        <Billboard follow={true}>
+          <mesh position={[0, 0, -0.02]}>
+            <planeGeometry args={[4.2, 0.54]} />
+            <meshBasicMaterial
+              color={isHovered ? "#181411" : "#0c0a08"}
+              transparent
+              opacity={0.94}
+            />
+          </mesh>
+          <mesh position={[0, 0, -0.019]}>
+            <planeGeometry args={[4.24, 0.58]} />
+            <meshBasicMaterial color={THEME.evidence.primary} transparent opacity={0.4} />
+          </mesh>
+          <Text
+            position={[0, 0.1, 0]}
+            fontSize={0.095}
+            color={isHovered ? THEME.evidence.primary : "#fef08a"}
+            anchorX="center"
+            anchorY="middle"
+            fontWeight={900}
+            letterSpacing={0.18}
+          >
+            ✦ HOLD &amp; DRAG TO ROTATE • SCROLL WHEEL TO ZOOM IN/OUT [{zoomPercent}%] ✦
+          </Text>
+          <Text
+            position={[0, -0.10, 0]}
+            fontSize={0.065}
+            color="#e2d9cc"
+            anchorX="center"
+            anchorY="middle"
+            fontWeight={700}
+            letterSpacing={0.14}
+          >
+            CLICK CITY PINS TO UNSEAL HER HOME, ARNAV&apos;S HOME &amp; CDAC HOSTEL
+          </Text>
+        </Billboard>
       </group>
     </group>
   );

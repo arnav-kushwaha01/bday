@@ -44,6 +44,7 @@ for (let i = 0; i < DUST_COUNT; i++) {
  */
 export default function HubRoom() {
   const enterCinematic = useTransitionStore((s) => s.enterCinematic);
+  const openMemory = useTransitionStore((s) => s.openMemory);
   const titleRef = useRef<THREE.Group>(null);
   const particlesRef = useRef<THREE.Points>(null);
 
@@ -95,17 +96,22 @@ export default function HubRoom() {
         <WestworldCandleLantern position={[1.2, -1.6, 0.2]} scale={0.9} />
 
         <Pedestal position={[0, -2.5, 0]}>
-          {/* Glowing Manila Case Monolith on the pedestal */}
+          {/* Glowing Manila Case Monolith on the pedestal — Clickable for Birthday Celebration */}
           <InteractableObject
             id="hub-centerpiece-monolith"
             type="object"
             position={[0, 0, 0]}
-            interactionPrompt="CINEMATIC ARCHIVE OVERVIEW"
-            onInteract={() => enterCinematic("hub-overview")}
+            interactionPrompt="✦ UNLOCK 23RD BIRTHDAY CELEBRATION & MELODY // ANSHIKA ✦"
+            onInteract={() => openMemory("happy-birthday-celebration")}
             showMarker={true}
           >
             <Float speed={1.5} rotationIntensity={0.1} floatIntensity={0.3}>
-              <group>
+              <group
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openMemory("happy-birthday-celebration");
+                }}
+              >
                 {/* Manila Dossier Book Shape */}
                 <mesh castShadow>
                   <boxGeometry args={[0.75, 0.95, 0.14]} />
@@ -185,16 +191,69 @@ export default function HubRoom() {
         />
       </group>
 
-      {/* ── Floor Investigation Compass Medallion ── */}
-      <group position={[0, 0.015, -1.8]}>
-        <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-          <ringGeometry args={[1.8, 1.9, 32]} />
-          <meshBasicMaterial color={THEME.folder.dark} transparent opacity={0.6} />
+      {/* ── Central Middle Platform & Floor Medallion (Interactive Birthday Trigger) ── */}
+      <group position={[0, 0, -1.8]}>
+        {/* Raised Circular Dais Platform */}
+        <mesh
+          position={[0, 0.08, 0]}
+          receiveShadow
+          onClick={(e) => {
+            e.stopPropagation();
+            openMemory("happy-birthday-celebration");
+          }}
+          onPointerOver={() => {
+            document.body.style.cursor = "pointer";
+          }}
+          onPointerOut={() => {
+            document.body.style.cursor = "default";
+          }}
+        >
+          <cylinderGeometry args={[2.5, 2.7, 0.16, 48]} />
+          <meshStandardMaterial
+            color="#140f0b"
+            roughness={0.65}
+            metalness={0.35}
+          />
         </mesh>
-        <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-          <ringGeometry args={[2.5, 2.55, 32]} />
-          <meshBasicMaterial color={THEME.folder.dark} transparent opacity={0.4} />
+
+        {/* Brass Glowing Rim */}
+        <mesh position={[0, 0.17, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[2.45, 2.55, 48]} />
+          <meshStandardMaterial
+            color={THEME.evidence.primary}
+            emissive={THEME.evidence.primary}
+            emissiveIntensity={0.9}
+            roughness={0.3}
+            metalness={0.8}
+          />
         </mesh>
+
+        {/* Middle Platform Interactable Object */}
+        <InteractableObject
+          id="hub-birthday-platform"
+          type="evidence"
+          position={[0, 0.4, 0]}
+          interactionPrompt="✦ UNLOCK 23RD BIRTHDAY CELEBRATION & MELODY // ANSHIKA ✦"
+          onInteract={() => openMemory("happy-birthday-celebration")}
+          showMarker={true}
+        >
+          <mesh visible={false}>
+            <cylinderGeometry args={[2.6, 2.6, 0.6, 16]} />
+            <meshBasicMaterial wireframe />
+          </mesh>
+        </InteractableObject>
+
+        {/* Circular Medallion Rings */}
+        <group position={[0, 0.18, 0]}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[1.7, 1.76, 32]} />
+            <meshBasicMaterial color={THEME.evidence.primary} transparent opacity={0.7} />
+          </mesh>
+          <mesh rotation={[-Math.PI / 2, 0, 0]}>
+            <ringGeometry args={[1.1, 1.15, 32]} />
+            <meshBasicMaterial color={THEME.classified.bright} transparent opacity={0.6} />
+          </mesh>
+        </group>
       </group>
 
       {/* ── Red Investigation String Lines on Floor (Connecting to entrances) ── */}

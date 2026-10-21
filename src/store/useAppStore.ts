@@ -33,6 +33,7 @@ export const SaveDataSchema = z.object({
   experienceMode: z.enum(["menu", "active"]).default("menu"),
   isDossierOpen: z.boolean().default(false),
   viewMode: z.enum(["3d", "2d"]).default("3d"),
+  lightingMode: z.enum(["dark", "normal"]).default("normal"),
   version: z.number(), // versioning for migrations
 });
 export type SaveData = z.infer<typeof SaveDataSchema>;
@@ -88,6 +89,7 @@ const INITIAL_STATE: Omit<SaveData, "version"> = {
   experienceMode: "menu",
   isDossierOpen: false,
   viewMode: "3d",
+  lightingMode: "normal",
 };
 
 type AppStore = SaveData & {
@@ -102,6 +104,8 @@ type AppStore = SaveData & {
   setExperienceMode: (mode: "menu" | "active") => void;
   setDossierOpen: (open: boolean) => void;
   setViewMode: (mode: "3d" | "2d") => void;
+  setLightingMode: (mode: "dark" | "normal") => void;
+  toggleLightingMode: () => void;
   restartExperience: () => void;
   continueArchive: () => void;
 };
@@ -150,11 +154,18 @@ export const useAppStore = create<AppStore>()(
       
       setViewMode: (viewMode) => set({ viewMode }),
 
+      setLightingMode: (lightingMode) => set({ lightingMode }),
+
+      toggleLightingMode: () => set((state) => ({
+        lightingMode: state.lightingMode === "dark" ? "normal" : "dark",
+      })),
+
       restartExperience: () => set((state) => ({
         ...INITIAL_STATE,
         experienceMode: "menu",
         isDossierOpen: false,
         viewMode: state.viewMode,
+        lightingMode: state.lightingMode,
         settings: {
           ...INITIAL_STATE.settings,
           audioEnabled: state.settings.audioEnabled, // preserve audio choice
@@ -178,6 +189,7 @@ export const useAppStore = create<AppStore>()(
         discoveredEasterEggs: state.discoveredEasterEggs,
         settings: state.settings,
         viewMode: state.viewMode,
+        lightingMode: state.lightingMode,
         version: state.version,
       }),
       merge: (persistedState: unknown, currentState) => {
