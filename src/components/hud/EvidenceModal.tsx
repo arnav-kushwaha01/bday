@@ -38,7 +38,7 @@ export function EvidenceModal() {
       },
       {
         id: "dist-kanpur",
-        title: "ORIGIN RECORD: KANPUR (HER HOME)",
+        title: "ORIGIN RECORD: ANSHIKA'S HOME (KANPUR)",
         description:
           "Coordinates: 26.4499° N, 80.3319° E • Where Anshika's story began on 25 October 2003.",
         memory:
@@ -50,16 +50,29 @@ export function EvidenceModal() {
         isClue: false,
       },
       {
-        id: "dist-bangalore",
-        title: "STATION RECORD: BANGALORE (WHERE ARNAV IS)",
+        id: "dist-arnav-home",
+        title: "BASE RECORD: ARNAV'S HOME (KANPUR)",
         description:
-          "Coordinates: 12.9716° N, 77.5946° E • Where Arnav works, misses her, and plots every journey home.",
+          "Coordinates: 26.4473° N, 80.3503° E • Origin base for our date rides and memories.",
         memory:
-          "The southern hub where every text is sent, where every sweet lie ('I hate you' - looks so cute lying) is cherished, and where every calendar day is circled waiting to be by her side.",
-        approximateDate: "CURRENT POST",
-        filename: "",
+          "Arnav's childhood home in Kanpur. The launchpad for every date, every afterparty, every late evening Scooty ride, and every memory that made us who we are today.",
+        approximateDate: "ORIGIN BASE • KANPUR",
+        filename: "our photo in our school afterparty.jpeg",
         room: "DISTANCE",
-        tag: "HIS STATION",
+        tag: "ARNAV'S HOME",
+        isClue: false,
+      },
+      {
+        id: "dist-bangalore",
+        title: "STATION RECORD: CDAC HOSTEL, BANGALORE (6-MONTH DIPLOMA)",
+        description:
+          "Coordinates: 12.8500° N, 77.6600° E • CDAC Knowledge Park / Electronics City, Bangalore.",
+        memory:
+          "Where Arnav is currently staying for his 6-month Advanced Computing diploma. 1,540 km away across India, studying hard, missing her intensely every second, and counting down every single day until he returns home to her. Temporary distance, eternal love.",
+        approximateDate: "6-MONTH DIPLOMA POST",
+        filename: "her_looking_beautiful_on_our_last_date_before_i_went_to_banglore.jpeg",
+        room: "DISTANCE",
+        tag: "CDAC HOSTEL",
         isClue: false,
       },
       {

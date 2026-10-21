@@ -34,8 +34,8 @@ export const LOVE_SONGS_PLAYLIST: LoveSongTrack[] = [
     id: "perfect",
     title: "Perfect",
     artist: "Ed Sheeran",
-    subtitle: "Acoustic Guitar & Warm Piano Romantic Ballad",
-    type: "synth",
+    subtitle: "Original Studio Master • Ed Sheeran",
+    type: "file",
     filePath: "/media/audio/songs/perfect.mp3",
     durationSeconds: 263,
   },
@@ -43,8 +43,8 @@ export const LOVE_SONGS_PLAYLIST: LoveSongTrack[] = [
     id: "rut",
     title: "Rut",
     artist: "Navjot Ahuja",
-    subtitle: "Soulful Punjabi Acoustic Love Ballad",
-    type: "synth",
+    subtitle: "Original Studio Master • Navjot Ahuja",
+    type: "file",
     filePath: "/media/audio/songs/rut.mp3",
     durationSeconds: 215,
   },
@@ -193,6 +193,11 @@ class AudioManager {
       this.sfxGain.gain.cancelScheduledValues(now);
       this.sfxGain.gain.linearRampToValueAtTime(this.sfxVolume, now + 0.1);
     }
+    if (this.customAudio) {
+      this.customAudio.volume = this.isMuted
+        ? 0
+        : (this.currentRoom === "FINAL" ? 0.02 : 1) * this.masterVolume * this.musicVolume;
+    }
   }
 
   // ─── Control Methods ─────────────────────────────────────────────────────────
@@ -200,6 +205,9 @@ class AudioManager {
   public setMuted(muted: boolean) {
     this.isMuted = muted;
     if (!muted) {
+      if (this.customAudio && this.isPlaying) {
+        this.customAudio.play().catch(() => {});
+      }
       this.init().then(() => {
         if (!this.isPlaying) {
           this.startPlayback();
@@ -331,12 +339,18 @@ class AudioManager {
     } else {
       // If playing love songs and user enters FINAL room, duck music to near silence per Rule 6
       if (newRoom === "FINAL") {
+        if (this.customAudio) {
+          this.customAudio.volume = 0.02;
+        }
         if (this.musicGain && this.ctx) {
           const now = this.ctx.currentTime;
           this.musicGain.gain.cancelScheduledValues(now);
           this.musicGain.gain.linearRampToValueAtTime(0.02, now + 1.5);
         }
       } else {
+        if (this.customAudio) {
+          this.customAudio.volume = this.isMuted ? 0 : this.masterVolume * this.musicVolume;
+        }
         if (this.musicGain && this.ctx) {
           const now = this.ctx.currentTime;
           this.musicGain.gain.cancelScheduledValues(now);
@@ -488,12 +502,28 @@ class AudioManager {
   private async startLoveSong(track: LoveSongTrack) {
     if (!this.ctx || !this.musicGain) return;
 
-    // 1. Try to load external file if provided
-    if (track.filePath) {
+    // 1. Try to load original master audio tracks
+    const candidatePaths: string[] = [];
+    if (track.filePath) candidatePaths.push(track.filePath);
+    if (track.id === "perfect") {
+      candidatePaths.push("/media/audio/songs/perfect.mp3");
+      candidatePaths.push("/media/audio/songs/ytmp3free.cc_ed-sheeran-perfect-youtubemp3free.org.mp3");
+    } else if (track.id === "rut") {
+      candidatePaths.push("/media/audio/songs/rut.mp3");
+      candidatePaths.push("/media/audio/songs/ytmp3free.cc_navjot-ahuja-rut-official-audio-youtubemp3free.org.mp3");
+    }
+
+    for (const path of candidatePaths) {
       try {
-        const audio = new Audio(track.filePath);
-        audio.loop = true;
-        audio.volume = this.musicVolume * (this.isMuted ? 0 : 1);
+        const audio = new Audio(path);
+        audio.preload = "auto";
+        audio.volume = this.isMuted
+          ? 0
+          : (this.currentRoom === "FINAL" ? 0.02 : 1) * this.masterVolume * this.musicVolume;
+
+        audio.onended = () => {
+          this.nextTrack();
+        };
 
         const playPromise = audio.play();
         if (playPromise !== undefined) {
@@ -502,7 +532,7 @@ class AudioManager {
           return;
         }
       } catch {
-        // File not on disk or 404, smoothly fall back to high-fidelity procedural synth
+        // Try next candidate or smoothly fall back to procedural synth arrangement
       }
     }
 

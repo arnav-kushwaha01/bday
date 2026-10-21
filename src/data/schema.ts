@@ -5,6 +5,8 @@ export const CoordinatesSchema = z.object({
   lat: z.number(),
   lng: z.number(),
   label: z.string(),
+  tag: z.string().optional(),
+  description: z.string().optional(),
 });
 export type Coordinates = z.infer<typeof CoordinatesSchema>;
 

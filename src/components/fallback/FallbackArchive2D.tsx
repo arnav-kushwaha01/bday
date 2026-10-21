@@ -527,7 +527,7 @@ export function FallbackArchive2D() {
                   { tab: "GALLERY", title: "1. Her Gallery", desc: "Photographic Evidence" },
                   { tab: "VERSIONS", title: "2. Versions of Her", desc: "23rd Birthday Dais" },
                   { tab: "EVIDENCE", title: "3. Evidence Room", desc: "12 Forensic Exhibits" },
-                  { tab: "DISTANCE", title: "4. The Distance", desc: "Delhi ↔ Pilani Map" },
+                  { tab: "DISTANCE", title: "4. The Distance", desc: "Kanpur ↔ CDAC Bangalore Map" },
                   { tab: "LITTLE_THINGS", title: "5. Little Things", desc: "10 Symbolic Artifacts" },
                   { tab: "MAIN_CHARACTER", title: "6. Main Character", desc: "Screening Lounge" },
                   { tab: "FUTURE", title: "7. Unwritten Chapters", desc: "9 Future Horizons" },
@@ -967,30 +967,30 @@ export function FallbackArchive2D() {
                   strokeDasharray="8 6"
                 />
 
-                {/* Delhi Node */}
+                {/* Kanpur Node (Her Home & His Home) */}
                 <circle cx="180" cy="280" r="8" fill={THEME.classified.bright} />
                 <circle cx="180" cy="280" r="16" fill="none" stroke={THEME.classified.bright} strokeWidth="1" opacity="0.6" />
                 <text x="180" y="320" fill={THEME.folder.light} fontSize="14" textAnchor="middle" fontFamily="monospace" fontWeight="bold">
-                  DELHI // HER CITY
+                  KANPUR // HER &amp; ARNAV&apos;S HOME
                 </text>
                 <text x="180" y="340" fill="#8a755d" fontSize="10" textAnchor="middle" fontFamily="monospace">
-                  28.6139° N, 77.2090° E
+                  26.4499° N, 80.3319° E • ORIGIN
                 </text>
 
-                {/* Pilani Node */}
+                {/* CDAC Hostel Bangalore Node */}
                 <circle cx="620" cy="280" r="8" fill={THEME.evidence.primary} />
                 <circle cx="620" cy="280" r="16" fill="none" stroke={THEME.evidence.primary} strokeWidth="1" opacity="0.6" />
                 <text x="620" y="320" fill={THEME.folder.light} fontSize="14" textAnchor="middle" fontFamily="monospace" fontWeight="bold">
-                  PILANI // HIS COLLEGE
+                  CDAC HOSTEL // BANGALORE
                 </text>
                 <text x="620" y="340" fill="#8a755d" fontSize="10" textAnchor="middle" fontFamily="monospace">
-                  28.3639° N, 75.6000° E
+                  12.8500° N, 77.6600° E • 6-MO DIPLOMA
                 </text>
 
                 {/* Midpoint Distance Badge */}
                 <rect x="330" y="140" width="140" height="34" rx="4" fill="#181411" stroke={THEME.evidence.primary} strokeWidth="1" />
                 <text x="400" y="162" fill={THEME.evidence.primary} fontSize="13" textAnchor="middle" fontFamily="monospace" fontWeight="bold">
-                  ~180 KM
+                  1,540 KM
                 </text>
               </svg>
 
@@ -1017,7 +1017,7 @@ export function FallbackArchive2D() {
                   NOT THE FEELING.
                 </div>
                 <div style={{ fontSize: "0.72rem", color: "#8a755d", maxWidth: 500, margin: "0.5rem auto 0" }}>
-                  180 kilometers of highway, night train routes, and late-night calls. Zero distance in the heart.
+                  1,540 kilometers between Kanpur and CDAC Bangalore. 6 months diploma. Zero distance in the heart.
                 </div>
               </div>
             </div>

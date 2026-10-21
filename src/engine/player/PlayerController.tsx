@@ -142,6 +142,9 @@ export function PlayerController() {
     };
 
     const handlePointerDown = (e: PointerEvent) => {
+      if (typeof window !== "undefined" && (window as unknown as { __isRotatingGlobe?: boolean }).__isRotatingGlobe) {
+        return;
+      }
       isMouseDown.current = true;
       lastMousePos.current = { x: e.clientX, y: e.clientY };
     };
@@ -151,6 +154,10 @@ export function PlayerController() {
     };
 
     const handlePointerMove = (e: PointerEvent) => {
+      if (typeof window !== "undefined" && (window as unknown as { __isRotatingGlobe?: boolean }).__isRotatingGlobe) {
+        isMouseDown.current = false;
+        return;
+      }
       if (!isMouseDown.current) return;
       const dx = e.clientX - lastMousePos.current.x;
       const dy = e.clientY - lastMousePos.current.y;

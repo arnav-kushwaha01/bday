@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { THEME } from "@/lib/theme";
 
 interface DistanceMap2DModalProps {
@@ -8,12 +8,16 @@ interface DistanceMap2DModalProps {
   onClose: () => void;
 }
 
+type ActiveLocation = "ALL" | "HER_HOME" | "HIS_HOME" | "CDAC_BANGALORE";
+
 /**
  * DistanceMap2DModal — High-fidelity 2D archival schematic map modal.
  * Fulfills SPEC.md Section 52 fallback and provides an interactive technical map
- * of the 1,540 km flight arc between Kanpur and Bangalore.
+ * of the 1,540 km flight arc between Kanpur (Her Home & His Home) and CDAC Hostel (Bangalore).
  */
 export function DistanceMap2DModal({ isOpen, onClose }: DistanceMap2DModalProps) {
+  const [selectedLoc, setSelectedLoc] = useState<ActiveLocation>("ALL");
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -31,8 +35,8 @@ export function DistanceMap2DModal({ isOpen, onClose }: DistanceMap2DModalProps)
         position: "fixed",
         inset: 0,
         zIndex: 9999,
-        background: "rgba(8, 6, 5, 0.92)",
-        backdropFilter: "blur(12px)",
+        background: "rgba(8, 6, 5, 0.94)",
+        backdropFilter: "blur(14px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -45,10 +49,12 @@ export function DistanceMap2DModal({ isOpen, onClose }: DistanceMap2DModalProps)
         style={{
           position: "relative",
           width: "100%",
-          maxWidth: "880px",
+          maxWidth: "920px",
+          maxHeight: "92vh",
+          overflowY: "auto",
           background: "#120e0a",
           border: `2px solid ${THEME.folder.base}`,
-          boxShadow: "0 24px 64px rgba(0,0,0,0.9), 0 0 40px rgba(234, 179, 8, 0.12)",
+          boxShadow: "0 24px 64px rgba(0,0,0,0.9), 0 0 40px rgba(234, 179, 8, 0.15)",
           padding: "1.75rem",
           color: "#e2d9cc",
           fontFamily: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
@@ -87,7 +93,7 @@ export function DistanceMap2DModal({ isOpen, onClose }: DistanceMap2DModalProps)
                 letterSpacing: "0.1em",
               }}
             >
-              2D TELEMETRIC MAP: KANPUR ◄——► BANGALORE
+              2D TELEMETRIC MAP: KANPUR (HOMES) ◄——► CDAC HOSTEL (BANGALORE)
             </div>
           </div>
 
@@ -109,13 +115,77 @@ export function DistanceMap2DModal({ isOpen, onClose }: DistanceMap2DModalProps)
           </button>
         </div>
 
+        {/* Location Selector Tabs */}
+        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+          <button
+            onClick={() => setSelectedLoc("ALL")}
+            style={{
+              background: selectedLoc === "ALL" ? "rgba(234, 179, 8, 0.2)" : "rgba(20, 16, 13, 0.8)",
+              border: `1px solid ${selectedLoc === "ALL" ? THEME.evidence.primary : "#382c20"}`,
+              color: selectedLoc === "ALL" ? "#fef08a" : "#a8947f",
+              padding: "0.35rem 0.75rem",
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              letterSpacing: "0.12em",
+            }}
+          >
+            ✦ ALL VECTORS (1,540 KM)
+          </button>
+          <button
+            onClick={() => setSelectedLoc("HER_HOME")}
+            style={{
+              background: selectedLoc === "HER_HOME" ? "rgba(234, 179, 8, 0.2)" : "rgba(20, 16, 13, 0.8)",
+              border: `1px solid ${selectedLoc === "HER_HOME" ? "#eab308" : "#382c20"}`,
+              color: selectedLoc === "HER_HOME" ? "#fef08a" : "#a8947f",
+              padding: "0.35rem 0.75rem",
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              letterSpacing: "0.12em",
+            }}
+          >
+            HER HOME (KANPUR)
+          </button>
+          <button
+            onClick={() => setSelectedLoc("HIS_HOME")}
+            style={{
+              background: selectedLoc === "HIS_HOME" ? "rgba(249, 115, 22, 0.2)" : "rgba(20, 16, 13, 0.8)",
+              border: `1px solid ${selectedLoc === "HIS_HOME" ? "#f97316" : "#382c20"}`,
+              color: selectedLoc === "HIS_HOME" ? "#fdba74" : "#a8947f",
+              padding: "0.35rem 0.75rem",
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              letterSpacing: "0.12em",
+            }}
+          >
+            ARNAV&apos;S HOME (KANPUR)
+          </button>
+          <button
+            onClick={() => setSelectedLoc("CDAC_BANGALORE")}
+            style={{
+              background: selectedLoc === "CDAC_BANGALORE" ? "rgba(56, 189, 248, 0.2)" : "rgba(20, 16, 13, 0.8)",
+              border: `1px solid ${selectedLoc === "CDAC_BANGALORE" ? "#38bdf8" : "#382c20"}`,
+              color: selectedLoc === "CDAC_BANGALORE" ? "#7dd3fc" : "#a8947f",
+              padding: "0.35rem 0.75rem",
+              fontSize: "0.65rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              letterSpacing: "0.12em",
+            }}
+          >
+            CDAC HOSTEL (BANGALORE • 6-MO)
+          </button>
+        </div>
+
         {/* Main Grid: SVG Map on Left, Telemetry Dossier on Right */}
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "1.1fr 0.9fr",
             gap: "1.5rem",
-            alignItems: "center",
+            alignItems: "start",
           }}
         >
           {/* Animated SVG Schematic of Indian Subcontinent */}
@@ -132,7 +202,7 @@ export function DistanceMap2DModal({ isOpen, onClose }: DistanceMap2DModalProps)
           >
             <svg
               viewBox="0 0 400 480"
-              style={{ width: "100%", maxHeight: "380px" }}
+              style={{ width: "100%", maxHeight: "400px" }}
               xmlns="http://www.w3.org/2000/svg"
             >
               {/* Archival Grid Lines */}
@@ -185,56 +255,74 @@ export function DistanceMap2DModal({ isOpen, onClose }: DistanceMap2DModalProps)
                 strokeWidth="1.5"
               />
 
-              {/* Flight Trajectory Arc (Kanpur: 215, 155 -> Bangalore: 180, 325) */}
+              {/* Great-Circle Flight Trajectory Arc (Kanpur: 215, 150 -> CDAC Bangalore: 180, 335) */}
               <path
-                d="M 215 155 Q 250 240 180 325"
+                d="M 215 150 Q 255 240 180 335"
                 fill="none"
                 stroke="url(#arcGrad)"
-                strokeWidth="3"
+                strokeWidth="3.2"
                 strokeDasharray="6,4"
               />
 
+              {/* Local Kanpur Arc between Her Home (215, 150) and His Home (228, 160) */}
+              <path
+                d="M 215 150 Q 225 145 228 160"
+                fill="none"
+                stroke="#fbbf24"
+                strokeWidth="2"
+                strokeDasharray="3,2"
+              />
+
               {/* Distance Apex Tag */}
-              <rect x="225" y="225" width="85" height="26" fill="#080605" stroke="#eab308" strokeWidth="1" />
-              <text x="267" y="242" fill="#eab308" fontSize="12" fontWeight="bold" textAnchor="middle">
+              <rect x="225" y="225" width="90" height="26" fill="#080605" stroke="#eab308" strokeWidth="1" />
+              <text x="270" y="242" fill="#eab308" fontSize="12" fontWeight="bold" textAnchor="middle">
                 1,540 KM
               </text>
 
-              {/* Kanpur Origin Marker */}
-              <circle cx="215" cy="155" r="14" fill="none" stroke="#eab308" strokeWidth="1.5" opacity="0.6">
+              {/* Her Home Marker (Kanpur) */}
+              <circle cx="215" cy="150" r="14" fill="none" stroke="#eab308" strokeWidth="1.5" opacity={selectedLoc === "HER_HOME" || selectedLoc === "ALL" ? "0.9" : "0.3"}>
                 <animate attributeName="r" values="8;18;8" dur="2.5s" repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2.5s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.9;0.3;0.9" dur="2.5s" repeatCount="indefinite" />
               </circle>
-              <circle cx="215" cy="155" r="5" fill="#eab308" />
-              <text x="215" y="138" fill="#eab308" fontSize="12" fontWeight="bold" textAnchor="middle">
-                KANPUR [ORIGIN]
+              <circle cx="215" cy="150" r="5" fill="#eab308" />
+              <text x="200" y="134" fill="#eab308" fontSize="11" fontWeight="bold" textAnchor="end">
+                HER HOME
               </text>
-              <text x="215" y="124" fill="#fef3c7" fontSize="9" textAnchor="middle">
-                25 OCT 2003 • 23 YRS
+              <text x="200" y="146" fill="#fef3c7" fontSize="8.5" textAnchor="end">
+                25.10.2003
               </text>
 
-              {/* Bangalore Station Marker */}
-              <circle cx="180" cy="325" r="14" fill="none" stroke="#38bdf8" strokeWidth="1.5" opacity="0.6">
-                <animate attributeName="r" values="8;18;8" dur="2.5s" repeatCount="indefinite" />
-                <animate attributeName="opacity" values="0.8;0.2;0.8" dur="2.5s" repeatCount="indefinite" />
+              {/* Arnav's Home Marker (Kanpur) */}
+              <circle cx="228" cy="160" r="10" fill="none" stroke="#f97316" strokeWidth="1.2" opacity={selectedLoc === "HIS_HOME" || selectedLoc === "ALL" ? "0.8" : "0.3"}>
+                <animate attributeName="r" values="6;14;6" dur="2.8s" repeatCount="indefinite" />
               </circle>
-              <circle cx="180" cy="325" r="5" fill="#38bdf8" />
-              <text x="180" y="348" fill="#38bdf8" fontSize="12" fontWeight="bold" textAnchor="middle">
-                BANGALORE [STATION]
-              </text>
-              <text x="180" y="362" fill="#e2d9cc" fontSize="9" textAnchor="middle">
-                CURRENT POST • ARNAV
+              <circle cx="228" cy="160" r="4" fill="#f97316" />
+              <text x="242" y="164" fill="#f97316" fontSize="10" fontWeight="bold" textAnchor="start">
+                ARNAV&apos;S HOME
               </text>
 
-              {/* Animated Light Packet */}
-              <circle r="4" fill="#ffffff">
-                <animateMotion path="M 215 155 Q 250 240 180 325" dur="3s" repeatCount="indefinite" />
+              {/* CDAC Bangalore Marker */}
+              <circle cx="180" cy="335" r="16" fill="none" stroke="#38bdf8" strokeWidth="1.6" opacity={selectedLoc === "CDAC_BANGALORE" || selectedLoc === "ALL" ? "0.9" : "0.3"}>
+                <animate attributeName="r" values="9;22;9" dur="2.2s" repeatCount="indefinite" />
+                <animate attributeName="opacity" values="0.9;0.2;0.9" dur="2.2s" repeatCount="indefinite" />
+              </circle>
+              <circle cx="180" cy="335" r="6" fill="#38bdf8" />
+              <text x="180" y="358" fill="#38bdf8" fontSize="12" fontWeight="bold" textAnchor="middle">
+                CDAC HOSTEL [BANGALORE]
+              </text>
+              <text x="180" y="372" fill="#7dd3fc" fontSize="9" textAnchor="middle">
+                6-MONTH DIPLOMA POST
+              </text>
+
+              {/* Animated Light Packet traveling Kanpur -> Bangalore */}
+              <circle r="4.5" fill="#ffffff">
+                <animateMotion path="M 215 150 Q 255 240 180 335" dur="3s" repeatCount="indefinite" />
               </circle>
             </svg>
           </div>
 
           {/* Telemetry Dossier Details */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.9rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
             <div
               style={{
                 background: "rgba(185, 28, 28, 0.15)",
@@ -253,6 +341,40 @@ export function DistanceMap2DModal({ isOpen, onClose }: DistanceMap2DModalProps)
               </div>
             </div>
 
+            {/* Dynamic Card depending on Selection */}
+            {selectedLoc === "HER_HOME" && (
+              <div style={{ background: "#181411", border: "1px solid #eab308", padding: "0.75rem", fontSize: "0.72rem" }}>
+                <div style={{ color: "#eab308", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.3rem" }}>
+                  HER HOME — KANPUR (UP)
+                </div>
+                <div style={{ color: "#fef3c7", lineHeight: 1.5 }}>
+                  Coordinates: 26.4499° N, 80.3319° E. The sacred origin where Anshika was born on 25 October 2003. Where her room, books, and family are.
+                </div>
+              </div>
+            )}
+
+            {selectedLoc === "HIS_HOME" && (
+              <div style={{ background: "#181411", border: "1px solid #f97316", padding: "0.75rem", fontSize: "0.72rem" }}>
+                <div style={{ color: "#f97316", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.3rem" }}>
+                  ARNAV&apos;S HOME — KANPUR (UP)
+                </div>
+                <div style={{ color: "#fef3c7", lineHeight: 1.5 }}>
+                  Coordinates: 26.4473° N, 80.3503° E. Origin base for endless scooty rides, Kulhad78 visits, and our school afterparty memories in Kanpur.
+                </div>
+              </div>
+            )}
+
+            {selectedLoc === "CDAC_BANGALORE" && (
+              <div style={{ background: "#181411", border: "1px solid #38bdf8", padding: "0.75rem", fontSize: "0.72rem" }}>
+                <div style={{ color: "#38bdf8", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.3rem" }}>
+                  CDAC HOSTEL — BANGALORE (CURRENT POST)
+                </div>
+                <div style={{ color: "#fef3c7", lineHeight: 1.5 }}>
+                  Coordinates: 12.8500° N, 77.6600° E. Where Arnav is residing for his 6-month Advanced Computing diploma. Studying hard, missing her constantly, and counting down every day to return.
+                </div>
+              </div>
+            )}
+
             {/* Metrics Table */}
             <div
               style={{
@@ -262,9 +384,17 @@ export function DistanceMap2DModal({ isOpen, onClose }: DistanceMap2DModalProps)
                 display: "flex",
                 flexDirection: "column",
                 gap: "0.4rem",
-                fontSize: "0.75rem",
+                fontSize: "0.73rem",
               }}
             >
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: "#9c7a4c" }}>Origin Cluster:</span>
+                <span style={{ color: "#eab308", fontWeight: 700 }}>Kanpur (Her Home &amp; His Home)</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: "#9c7a4c" }}>Destination Station:</span>
+                <span style={{ color: "#38bdf8", fontWeight: 700 }}>CDAC Hostel, Bangalore (6-Mo Diploma)</span>
+              </div>
               <div style={{ display: "flex", justifyContent: "space-between" }}>
                 <span style={{ color: "#9c7a4c" }}>Total Flight Distance:</span>
                 <span style={{ color: THEME.evidence.primary, fontWeight: 700 }}>1,540 KM</span>
@@ -281,10 +411,6 @@ export function DistanceMap2DModal({ isOpen, onClose }: DistanceMap2DModalProps)
                 <span style={{ color: "#9c7a4c" }}>Heartbeat Latency:</span>
                 <span style={{ color: "#4ade80", fontWeight: 700 }}>0.00 Seconds</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
-                <span style={{ color: "#9c7a4c" }}>Sacred Synchronicity:</span>
-                <span style={{ color: THEME.evidence.primary, fontWeight: 700 }}>11:11 Daily Sync</span>
-              </div>
             </div>
 
             {/* Anshika Quote Box */}
@@ -299,9 +425,9 @@ export function DistanceMap2DModal({ isOpen, onClose }: DistanceMap2DModalProps)
                 fontStyle: "italic",
               }}
             >
-              {'“Why haven\'t you texted me for an hour?” • “Bahot busy hoge na” • “How much she misses Arnav everytime”'}
+              {'\u201cWhy haven\'t you texted me for an hour?\u201d • \u201cBahot busy hoge na\u201d • \u201cHow much she misses Arnav everytime\u201d'}
               <div style={{ marginTop: "0.4rem", fontStyle: "normal", color: "#9c7a4c", fontSize: "0.65rem" }}>
-                No matter how many kilometers lie between Kanpur and Bangalore, every second counts down to celebrating you.
+                A 6-month diploma is temporary. 1,540 kilometers is temporary. Arnav &amp; Anshika are permanent.
               </div>
             </div>
 

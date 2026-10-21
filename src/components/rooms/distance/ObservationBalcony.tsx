@@ -285,7 +285,7 @@ export function ObservationBalcony() {
           anchorY="middle"
           letterSpacing={0.2}
         >
-          KANPUR (26.45° N, 80.33° E) ◄—— 1,540 KM ——► BANGALORE (12.97° N, 77.59° E)
+          KANPUR (HOMES) ◄—— 1,540 KM ——► CDAC HOSTEL, BANGALORE (6-MO DIPLOMA)
         </Text>
       </group>
 
@@ -324,7 +324,7 @@ export function ObservationBalcony() {
           letterSpacing={0.15}
           fontStyle="italic"
         >
-          1,540 km between our cities. Zero miles between our hearts.
+          1,540 km between Kanpur and CDAC Bangalore. Zero miles between our hearts.
         </Text>
 
         <Text
