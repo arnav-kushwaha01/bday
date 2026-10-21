@@ -48,6 +48,11 @@ export function PlayerController() {
   const isInspectMode = usePlayerStore((s) => s.isInspectMode);
   const toggleInspectMode = usePlayerStore((s) => s.toggleInspectMode);
 
+  const isInspectModeRef = useRef(isInspectMode);
+  useEffect(() => {
+    isInspectModeRef.current = isInspectMode;
+  }, [isInspectMode]);
+
   const { camera, gl } = useThree();
 
   // Internal per-frame movement and orientation refs (NO React state per frame)
@@ -109,8 +114,8 @@ export function PlayerController() {
       const key = e.key ? e.key.toLowerCase() : "";
       const now = performance.now();
 
-      // [Y] Key toggles Inspect Mode (Flying 3D mode)
-      if (key === "y" || e.code === "KeyY") {
+      // [Y] Key toggles Inspect Mode (Flying 3D mode) — ignore key repeat
+      if ((key === "y" || e.code === "KeyY") && !e.repeat) {
         e.preventDefault();
         toggleInspectMode();
         return;
@@ -150,8 +155,8 @@ export function PlayerController() {
       }
       if (e.shiftKey || key === "shift" || e.code === "ShiftLeft" || e.code === "ShiftRight") keys.current.shift = true;
 
-      // E or Space to interact in standard FPP mode
-      if (!isInspectMode && (key === "e" || e.code === "KeyE" || e.code === "Space")) {
+      // E or Space to interact in standard FPP mode (NEVER trigger in Inspect/Flying mode)
+      if (!isInspectModeRef.current && (key === "e" || e.code === "KeyE" || e.code === "Space")) {
         if (!focusedTarget && !cinematicMode && activeInteractable) {
           e.preventDefault();
           triggerActiveInteraction();
@@ -186,6 +191,10 @@ export function PlayerController() {
     };
 
     const handlePointerDown = (e: PointerEvent) => {
+      // Clear DOM button focus so subsequent key presses (W, Space, etc.) are delivered to the game canvas
+      if (document.activeElement && document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
       if (typeof window !== "undefined" && (window as unknown as { __isRotatingGlobe?: boolean }).__isRotatingGlobe) {
         return;
       }
@@ -216,8 +225,14 @@ export function PlayerController() {
       setIsTouchDevice(true);
     };
 
+    const handleWindowBlur = () => {
+      Object.keys(keys.current).forEach((k) => (keys.current[k] = false));
+      isMouseDown.current = false;
+    };
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleWindowBlur);
     window.addEventListener("touchstart", handleTouchStart, { passive: true });
 
     const domElement = gl.domElement;
@@ -228,6 +243,7 @@ export function PlayerController() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleWindowBlur);
       window.removeEventListener("touchstart", handleTouchStart);
       domElement.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("pointerup", handlePointerUp);

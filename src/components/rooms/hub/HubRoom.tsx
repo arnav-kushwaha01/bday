@@ -25,6 +25,7 @@ import {
   GrandFinalPortalEntrance,
 } from "./HubEntrances";
 import { CakeEasterEggSafe } from "@/components/easter-eggs/CakeEasterEggSafe";
+import { ArcadeMachine3D } from "./ArcadeMachine3D";
 import { HubBirthdayCelebration } from "./HubBirthdayCelebration";
 import { soundEngine } from "@/engine/audio/AudioManager";
 import { useAppStore } from "@/store/useAppStore";
@@ -328,6 +329,17 @@ export default function HubRoom() {
 
       {/* Secret Archival Evidence Safe — EASTER EGG #01: THE 23RD BIRTHDAY CAKE */}
       <CakeEasterEggSafe position={[0, 0, -9.4]} />
+
+      {/* 3D Interactive Neon Arcade Cabinet — ANSHIKA 23RD BIRTHDAY ARCADE */}
+      <ArcadeMachine3D
+        position={[7.8, 0, 1.2]}
+        rotation={[0, -Math.PI / 2, 0]}
+        onOpenArcade={() => {
+          if (typeof window !== "undefined") {
+            window.dispatchEvent(new CustomEvent("open-arcade"));
+          }
+        }}
+      />
 
       {/* 3. Left Wall Rear — Circular Steel Vault Door (EVIDENCE ROOM) */}
       <VaultDoorEntrance

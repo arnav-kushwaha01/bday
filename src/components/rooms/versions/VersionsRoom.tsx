@@ -8,6 +8,7 @@ import { InteractableObject } from "@/engine/interaction/InteractableObject";
 import { useTransitionStore } from "@/engine/transitions/transitionStore";
 import { anshikaData } from "@/data/anshika";
 import { THEME } from "@/lib/theme";
+import { getVideoUrl } from "@/lib/assetManager";
 
 /**
  * VersionsRoom — Room 2: Versions of Her.
@@ -177,6 +178,7 @@ export default function VersionsRoom() {
           rotation={[0, -Math.PI / 2, 0]}
           width={1.4}
           height={1.05}
+          videoUrl={getVideoUrl("her_showing_a_slap_angrily(looking cute though).mp4")}
         />
       )}
       {pCuteSad && (

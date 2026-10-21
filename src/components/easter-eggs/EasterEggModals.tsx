@@ -112,9 +112,9 @@ export function EasterEggModals() {
           zIndex: 48,
           background: "rgba(18, 14, 10, 0.85)",
           border: `1.5px solid ${
-            discoveredEasterEggs.length === 3 ? "#22c55e" : THEME.evidence.primary
+            discoveredEasterEggs.length === 5 ? "#22c55e" : THEME.evidence.primary
           }`,
-          color: discoveredEasterEggs.length === 3 ? "#86efac" : THEME.evidence.primary,
+          color: discoveredEasterEggs.length === 5 ? "#86efac" : THEME.evidence.primary,
           padding: "0.45rem 0.9rem",
           fontSize: "0.62rem",
           fontWeight: 900,
@@ -136,7 +136,7 @@ export function EasterEggModals() {
         }}
       >
         <span>★</span>
-        <span>SECRETS: {discoveredEasterEggs.length} / 3</span>
+        <span>SECRETS: {discoveredEasterEggs.length} / 5</span>
       </button>
 
       {/* ─── 1. CAKE EASTER EGG MODAL (ee-cake) ────────────────────── */}
@@ -654,6 +654,98 @@ export function EasterEggModals() {
                   }}
                 >
                   {discoveredEasterEggs.includes("ee-annav") ? "REPLAY" : "TRY NOW"}
+                </button>
+              </div>
+
+              {/* Egg 4: Anshika Arcade */}
+              <div
+                style={{
+                  background: "#140f0b",
+                  border: "1px solid #2e2318",
+                  padding: "0.9rem",
+                  borderRadius: "3px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "0.8rem",
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: "0.78rem", color: THEME.evidence.primary }}>
+                    #04: 23RD BIRTHDAY ARCADE // 5 MINI-GAMES
+                  </div>
+                  <div style={{ fontSize: "0.68rem", color: "#9c7a4c", marginTop: "0.2rem" }}>
+                    {discoveredEasterEggs.includes("ee-arcade")
+                      ? "Discovered! Heart Shooter, Midnight Racer, Word Puzzle, Sudoku, Tic-Tac-Toe."
+                      : "Clue: Interact with the 3D Arcade Cabinet in the Archive Hub or click [ARCADE] in HUD."}
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    unlockEasterEgg("ee-arcade");
+                    setIsTrackerOpen(false);
+                    if (typeof window !== "undefined") {
+                      window.dispatchEvent(new CustomEvent("open-arcade"));
+                    }
+                  }}
+                  style={{
+                    background: "none",
+                    border: `1px solid ${THEME.evidence.primary}`,
+                    color: THEME.evidence.primary,
+                    padding: "0.3rem 0.6rem",
+                    fontSize: "0.6rem",
+                    cursor: "pointer",
+                    borderRadius: "2px",
+                    fontWeight: 700,
+                  }}
+                >
+                  LAUNCH ARCADE
+                </button>
+              </div>
+
+              {/* Egg 5: Classified Wiretaps */}
+              <div
+                style={{
+                  background: "#140f0b",
+                  border: "1px solid #2e2318",
+                  padding: "0.9rem",
+                  borderRadius: "3px",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: "0.8rem",
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: "0.78rem", color: THEME.evidence.primary }}>
+                    #05: CLASSIFIED WIRETAPS // 11 AUTHENTIC TAPES
+                  </div>
+                  <div style={{ fontSize: "0.68rem", color: "#9c7a4c", marginTop: "0.2rem" }}>
+                    {discoveredEasterEggs.includes("ee-wiretaps")
+                      ? "Discovered! All 11 genuine voice notes unlocked in the wiretap deck."
+                      : "Clue: Listen to Anshika's genuine voice intercepts in the Arcade wiretap player."}
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    unlockEasterEgg("ee-wiretaps");
+                    setIsTrackerOpen(false);
+                    if (typeof window !== "undefined") {
+                      window.dispatchEvent(new CustomEvent("open-arcade"));
+                    }
+                  }}
+                  style={{
+                    background: "none",
+                    border: `1px solid ${THEME.evidence.primary}`,
+                    color: THEME.evidence.primary,
+                    padding: "0.3rem 0.6rem",
+                    fontSize: "0.6rem",
+                    cursor: "pointer",
+                    borderRadius: "2px",
+                    fontWeight: 700,
+                  }}
+                >
+                  LISTEN TAPES
                 </button>
               </div>
             </div>

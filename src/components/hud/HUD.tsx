@@ -16,6 +16,7 @@ import { THEME } from "@/lib/theme";
 import { useAudioSync } from "@/engine/audio/useAudioSync";
 import { AudioCassetteModal } from "./AudioCassetteModal";
 import { soundEngine } from "@/engine/audio/AudioManager";
+import { ArcadeModal } from "@/components/games/ArcadeModal";
 
 /**
  * HUD — heads-up display overlay showing current room, settings, navigation,
@@ -26,6 +27,13 @@ export function HUD() {
   useAudioSync();
   const [isMapOpen, setIsMapOpen] = useState(false);
   const [isTapeDeckOpen, setIsTapeDeckOpen] = useState(false);
+  const [isArcadeOpen, setIsArcadeOpen] = useState(false);
+
+  useEffect(() => {
+    const handleOpenArcade = () => setIsArcadeOpen(true);
+    window.addEventListener("open-arcade", handleOpenArcade);
+    return () => window.removeEventListener("open-arcade", handleOpenArcade);
+  }, []);
   const currentRoom = useAppStore((s) => s.currentRoom);
   const cinematicMode = useAppStore((s) => s.cinematicMode);
   const audioEnabled = useAppStore((s) => s.settings.audioEnabled);
@@ -161,7 +169,10 @@ export function HUD() {
             >
               {/* Audio quick toggle */}
               <button
-                onClick={() => setAudioEnabled(!audioEnabled)}
+                onClick={(e) => {
+                  (e.currentTarget as HTMLElement)?.blur();
+                  setAudioEnabled(!audioEnabled);
+                }}
                 style={{
                   background: "rgba(16, 13, 11, 0.85)",
                   border: `1px solid ${audioEnabled ? THEME.evidence.primary : THEME.folder.dark}`,
@@ -182,7 +193,10 @@ export function HUD() {
 
               {/* Lighting Mode toggle: Normal Light vs Eerie Dark Mode */}
               <button
-                onClick={toggleLightingMode}
+                onClick={(e) => {
+                  (e.currentTarget as HTMLElement)?.blur();
+                  toggleLightingMode();
+                }}
                 style={{
                   background: "rgba(16, 13, 11, 0.85)",
                   border: `1px solid ${lightingMode === "normal" ? "#facc15" : THEME.folder.dark}`,
@@ -203,7 +217,10 @@ export function HUD() {
 
               {/* Inspect Mode (Flying 3D) toggle */}
               <button
-                onClick={toggleInspectMode}
+                onClick={(e) => {
+                  (e.currentTarget as HTMLElement)?.blur();
+                  toggleInspectMode();
+                }}
                 style={{
                   background: isInspectMode ? "rgba(56, 189, 248, 0.2)" : "rgba(16, 13, 11, 0.85)",
                   border: `1px solid ${isInspectMode ? "#38bdf8" : THEME.folder.dark}`,
@@ -225,7 +242,10 @@ export function HUD() {
 
               {/* Tape Deck / Love Playlist Modal Trigger */}
               <button
-                onClick={() => setIsTapeDeckOpen(true)}
+                onClick={(e) => {
+                  (e.currentTarget as HTMLElement)?.blur();
+                  setIsTapeDeckOpen(true);
+                }}
                 style={{
                   background: "rgba(16, 13, 11, 0.85)",
                   border: `1px solid ${THEME.evidence.primary}88`,
@@ -246,6 +266,35 @@ export function HUD() {
               >
                 <span>♫</span>
                 <span>TAPE DECK</span>
+              </button>
+
+              {/* Arcade & Mini-Games Modal Trigger */}
+              <button
+                onClick={(e) => {
+                  (e.currentTarget as HTMLElement)?.blur();
+                  setIsArcadeOpen(true);
+                }}
+                style={{
+                  background: isArcadeOpen ? "rgba(244, 63, 94, 0.3)" : "rgba(16, 13, 11, 0.85)",
+                  border: `1px solid ${isArcadeOpen ? "#f43f5e" : THEME.evidence.primary}88`,
+                  borderRadius: 2,
+                  padding: "clamp(0.26rem, 1.2vw, 0.38rem) clamp(0.4rem, 1.6vw, 0.65rem)",
+                  color: isArcadeOpen ? "#f43f5e" : "#fef08a",
+                  fontSize: "clamp(0.5rem, 1.4vw, 0.58rem)",
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.25rem",
+                  whiteSpace: "nowrap",
+                }}
+                title="Play Anshika Arcade & Games (Hearts, Racer, Word Game, Sudoku, Wiretaps)"
+              >
+                <span>🎮</span>
+                <span>ARCADE</span>
               </button>
 
               {/* Quality indicator (hidden on very narrow mobile phones) */}
@@ -560,6 +609,12 @@ export function HUD() {
           <AudioCassetteModal
             isOpen={isTapeDeckOpen}
             onClose={() => setIsTapeDeckOpen(false)}
+          />
+
+          {/* Anshika Arcade & Mini-Games Modal (Hearts, Racer, Word Game, Sudoku, Wiretaps) */}
+          <ArcadeModal
+            isOpen={isArcadeOpen}
+            onClose={() => setIsArcadeOpen(false)}
           />
 
           {/* Mobile Joystick & Interact FAB */}

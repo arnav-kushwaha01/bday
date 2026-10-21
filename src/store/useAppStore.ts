@@ -190,10 +190,9 @@ export const useAppStore = create<AppStore>()(
       name: "anshika-archive-storage",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        // We only persist meaningful things, not cinematic mode
+        // We only persist core configuration and discovered evidence, NOT secrets/easter eggs so they reset on page refresh
         currentRoom: state.currentRoom,
         discoveredEvidence: state.discoveredEvidence,
-        discoveredEasterEggs: state.discoveredEasterEggs,
         settings: state.settings,
         viewMode: state.viewMode,
         lightingMode: state.lightingMode,
@@ -203,7 +202,12 @@ export const useAppStore = create<AppStore>()(
         try {
           // Validate incoming persisted data with Zod before applying
           const validData = SaveDataSchema.partial().parse(persistedState);
-          return { ...currentState, ...validData };
+          return {
+            ...currentState,
+            ...validData,
+            // Secrets & cake confession safe must always reset to locked/default on refresh
+            discoveredEasterEggs: [],
+          };
         } catch (error) {
           console.error("Storage migration/validation failed, using defaults", error);
           return currentState;

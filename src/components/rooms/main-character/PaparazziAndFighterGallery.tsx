@@ -1,13 +1,14 @@
 "use client";
 
-import { Suspense, useRef } from "react";
+import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Text, Image as DreiImage } from "@react-three/drei";
+import { Text } from "@react-three/drei";
 import * as THREE from "three";
 import { InteractableObject } from "@/engine/interaction/InteractableObject";
 import { useTransitionStore } from "@/engine/transitions/transitionStore";
 import { THEME } from "@/lib/theme";
 import { getPhotoUrl } from "@/lib/assetManager";
+import { ArchivalMediaMesh } from "@/components/media/ArchivalMediaMesh";
 
 const BRASS_GOLD = new THREE.Color(THEME.evidence.primary);
 const DARK_WALNUT = new THREE.Color(THEME.folder.desk);
@@ -102,17 +103,14 @@ export function PaparazziAndFighterGallery() {
             <meshStandardMaterial color="#080605" roughness={0.9} />
           </mesh>
 
-          {/* Photo Image */}
-          <Suspense fallback={null}>
-            <group position={[0, 0, 0.035]}>
-              <DreiImage
-                url={photoScaredUrl}
-                scale={[1.1, 1.4]}
-                transparent
-                toneMapped={false}
-              />
-            </group>
-          </Suspense>
+          {/* Archival Media Canvas */}
+          <ArchivalMediaMesh
+            photoUrl={photoScaredUrl}
+            width={1.1}
+            height={1.4}
+            title="Paparazzi Moment"
+            approximateDate="ICONIC ARCHIVE"
+          />
 
           {/* Brass Tag */}
           <group position={[0, -0.92, 0.035]}>
@@ -205,17 +203,14 @@ export function PaparazziAndFighterGallery() {
             <meshStandardMaterial color="#080605" roughness={0.9} />
           </mesh>
 
-          {/* Photo Image */}
-          <Suspense fallback={null}>
-            <group position={[0, 0, 0.035]}>
-              <DreiImage
-                url={photoBoxingUrl}
-                scale={[1.1, 1.4]}
-                transparent
-                toneMapped={false}
-              />
-            </group>
-          </Suspense>
+          {/* Archival Media Canvas */}
+          <ArchivalMediaMesh
+            photoUrl={photoBoxingUrl}
+            width={1.1}
+            height={1.4}
+            title="The Fighter"
+            approximateDate="ICONIC ARCHIVE"
+          />
 
           {/* Brass Tag */}
           <group position={[0, -0.92, 0.035]}>
@@ -358,17 +353,14 @@ export function PaparazziAndFighterGallery() {
             <meshStandardMaterial color="#080605" roughness={0.9} />
           </mesh>
 
-          {/* Photo Image */}
-          <Suspense fallback={null}>
-            <group position={[0, 0, 0.035]}>
-              <DreiImage
-                url={photoJokeUrl}
-                scale={[1.1, 1.4]}
-                transparent
-                toneMapped={false}
-              />
-            </group>
-          </Suspense>
+          {/* Archival Media Canvas */}
+          <ArchivalMediaMesh
+            photoUrl={photoJokeUrl}
+            width={1.1}
+            height={1.4}
+            title="Cute Joke"
+            approximateDate="MEMORABLE ARCHIVE"
+          />
 
           {/* Brass Tag */}
           <group position={[0, -0.92, 0.035]}>

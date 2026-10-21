@@ -1,13 +1,14 @@
 "use client";
 
-import { Suspense, useRef } from "react";
+import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import { Text, Image as DreiImage } from "@react-three/drei";
+import { Text } from "@react-three/drei";
 import * as THREE from "three";
 import { InteractableObject } from "@/engine/interaction/InteractableObject";
 import { useTransitionStore } from "@/engine/transitions/transitionStore";
 import { THEME } from "@/lib/theme";
-import { getPhotoUrl } from "@/lib/assetManager";
+import { getPhotoUrl, getVideoUrl } from "@/lib/assetManager";
+import { ArchivalMediaMesh } from "@/components/media/ArchivalMediaMesh";
 
 const BRASS_GOLD = new THREE.Color(THEME.evidence.primary);
 const VELVET_RED = new THREE.Color("#7f1d1d");
@@ -171,22 +172,20 @@ export function ProsceniumStage({
           <meshStandardMaterial color={BRASS_GOLD} roughness={0.25} metalness={0.85} />
         </mesh>
         {/* Inner Frame Molding */}
-        <mesh position={[0, 0, 0.05]}>
+        <mesh position={[0, 0, 0.04]}>
           <boxGeometry args={[2.88, 2.28, 0.04]} />
           <meshStandardMaterial color="#1a1208" roughness={0.6} />
         </mesh>
 
-        {/* Hero Photo Image (With Suspense) */}
-        <Suspense fallback={null}>
-          <group position={[0, 0, 0.08]}>
-            <DreiImage
-              url={photoUrl}
-              scale={[2.7, 2.1]}
-              transparent
-              toneMapped={false}
-            />
-          </group>
-        </Suspense>
+        {/* Hero Photo / Looping Video Canvas */}
+        <ArchivalMediaMesh
+          photoUrl={photoUrl}
+          videoUrl={getVideoUrl("her_looking_like_a_diva_while_air_distorts_her_hair_and_she_fixes_them_with_her_hands.mp4")}
+          width={2.7}
+          height={2.1}
+          title="She's The Main Character"
+          approximateDate="ICONIC ARCHIVE"
+        />
 
         {/* Dedicated Overhead Follow Spotlight */}
         <spotLight

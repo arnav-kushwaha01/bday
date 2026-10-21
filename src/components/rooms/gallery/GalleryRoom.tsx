@@ -14,6 +14,7 @@ import { InteractableObject } from "@/engine/interaction/InteractableObject";
 import { useTransitionStore } from "@/engine/transitions/transitionStore";
 import { anshikaData } from "@/data/anshika";
 import { THEME } from "@/lib/theme";
+import { getVideoUrl } from "@/lib/assetManager";
 
 /**
  * GalleryRoom — Room 1: Her Gallery.
@@ -221,7 +222,7 @@ export default function GalleryRoom() {
       </group>
 
       {/* ── 1. Back Wall Hero Exhibits (Z = -15.6) ── */}
-      {/* Centerpiece Hero Exhibit */}
+      {/* Centerpiece Hero Exhibit: Plays her last birthday video on loop! */}
       {backWallPhotos[0] && (
         <ExhibitFrame
           photo={backWallPhotos[0]}
@@ -230,6 +231,7 @@ export default function GalleryRoom() {
           rotation={[0, 0, 0]}
           width={2.2}
           height={1.65}
+          videoUrl={getVideoUrl("her_last_birthday_looking_gorgeous.mp4")}
         />
       )}
       {/* Flanking Exhibits on Back Wall */}
@@ -259,6 +261,8 @@ export default function GalleryRoom() {
         // Spaced along Z: -10, -5, 0, 5, 10
         const zPos = -10 + i * 5;
         const exhibitNum = 4 + i;
+        // Frame #5 loops her Mocha Café video
+        const vid = i === 1 ? getVideoUrl("her_slaying_in_her_look_in_mocha_cafe.mp4") : undefined;
         return (
           <ExhibitFrame
             key={photo.id}
@@ -268,6 +272,7 @@ export default function GalleryRoom() {
             rotation={[0, Math.PI / 2, 0]}
             width={1.5}
             height={1.12}
+            videoUrl={vid}
           />
         );
       })}
@@ -276,6 +281,8 @@ export default function GalleryRoom() {
       {rightWallPhotos.map((photo, i) => {
         const zPos = -10 + i * 5;
         const exhibitNum = 9 + i;
+        // Frame #11 loops her arcade jackpot tickets video!
+        const vid = i === 2 ? getVideoUrl("she_pulling_loads_of_tickets_from_an_arcade_machine.mp4") : undefined;
         return (
           <ExhibitFrame
             key={photo.id}
@@ -285,6 +292,7 @@ export default function GalleryRoom() {
             rotation={[0, -Math.PI / 2, 0]}
             width={1.5}
             height={1.12}
+            videoUrl={vid}
           />
         );
       })}

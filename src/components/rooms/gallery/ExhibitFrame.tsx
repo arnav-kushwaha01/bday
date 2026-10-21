@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, Suspense } from "react";
+import { useRef } from "react";
 import * as THREE from "three";
-import { Image as DreiImage, Text } from "@react-three/drei";
+import { Text } from "@react-three/drei";
 import { InteractableObject } from "@/engine/interaction/InteractableObject";
 import { useTransitionStore } from "@/engine/transitions/transitionStore";
 import { THEME } from "@/lib/theme";
 import { getPhotoUrl } from "@/lib/assetManager";
+import { ArchivalMediaMesh } from "@/components/media/ArchivalMediaMesh";
 import type { PhotoEntry } from "@/data/schema";
 
 interface ExhibitFrameProps {
@@ -16,41 +17,10 @@ interface ExhibitFrameProps {
   rotation?: [number, number, number];
   width?: number;
   height?: number;
+  videoUrl?: string;
 }
 
-/**
- * Fallback canvas when texture/image is loading or missing.
- */
-function ArchivalPhotoFallback({ width, height }: { width: number; height: number }) {
-  return (
-    <group position={[0, 0, 0.02]}>
-      {/* Matte charcoal backing */}
-      <mesh>
-        <planeGeometry args={[width, height]} />
-        <meshStandardMaterial color="#14100c" roughness={0.8} />
-      </mesh>
-      {/* Stamped text */}
-      <Text
-        position={[0, 0.15, 0.01]}
-        fontSize={0.08}
-        color={THEME.folder.light}
-        anchorX="center"
-        letterSpacing={0.2}
-      >
-        EVIDENCE FILE
-      </Text>
-      <Text
-        position={[0, -0.05, 0.01]}
-        fontSize={0.06}
-        color={THEME.evidence.primary}
-        anchorX="center"
-        letterSpacing={0.15}
-      >
-        RESTRICTED ARCHIVE
-      </Text>
-    </group>
-  );
-}
+
 
 /**
  * ExhibitFrame — A museum-grade archival photo frame in the murder/mystery detective aesthetic.
@@ -64,6 +34,7 @@ export function ExhibitFrame({
   rotation = [0, 0, 0],
   width = 1.4,
   height = 1.05,
+  videoUrl,
 }: ExhibitFrameProps) {
   const openMemory = useTransitionStore((s) => s.openMemory);
   const focusObject = useTransitionStore((s) => s.focusObject);
@@ -128,7 +99,7 @@ export function ExhibitFrame({
         </mesh>
 
         {/* Parchment matting */}
-        <mesh position={[0, 0, 0.042]}>
+        <mesh position={[0, 0, 0.040]}>
           <planeGeometry args={[width + 0.08, height + 0.08]} />
           <meshStandardMaterial
             color="#e3d6be"
@@ -137,17 +108,15 @@ export function ExhibitFrame({
           />
         </mesh>
 
-        {/* Photo Image Canvas with Suspense fallback */}
-        <Suspense fallback={<ArchivalPhotoFallback width={width} height={height} />}>
-          <group position={[0, 0, 0.045]}>
-            <DreiImage
-              url={photoUrl}
-              scale={[width, height]}
-              transparent
-              toneMapped={false}
-            />
-          </group>
-        </Suspense>
+        {/* Authentic Photo / Looping Video Canvas */}
+        <ArchivalMediaMesh
+          photoUrl={photoUrl}
+          videoUrl={videoUrl}
+          width={width}
+          height={height}
+          title={photo.title}
+          approximateDate={photo.approximateDate}
+        />
 
         {/* Brass Exhibition Nameplate beneath frame */}
         <group position={[0, -outerHeight / 2 - 0.16, 0.02]}>
