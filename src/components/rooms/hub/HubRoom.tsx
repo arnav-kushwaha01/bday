@@ -23,6 +23,8 @@ import {
   FrostedOfficeDoorEntrance,
   StaircaseDescentEntrance,
   GrandFinalPortalEntrance,
+  ShootingArenaEntrance,
+  CarRaceEntrance,
 } from "./HubEntrances";
 import { CakeEasterEggSafe } from "@/components/easter-eggs/CakeEasterEggSafe";
 import { ArcadeMachine3D } from "./ArcadeMachine3D";
@@ -382,6 +384,20 @@ export default function HubRoom() {
         rotation={[0, Math.PI, 0]}
       />
       <EvidenceMarker number="FINAL" position={[5.5, 0, 8.8]} rotation={[0, Math.PI, 0]} />
+
+      {/* 9. Left Wall Corner — Neon Carnival Portal (3D SHOOTING ARENA) */}
+      <ShootingArenaEntrance
+        position={[-9.8, 0, -7.5]}
+        rotation={[0, Math.PI / 2, 0]}
+      />
+      <EvidenceMarker number="09" position={[-9.2, 0, -8.6]} rotation={[0, Math.PI / 2, 0]} />
+
+      {/* 10. Right Wall Corner — Grand Prix Tunnel Archway (3D CAR RACE STADIUM) */}
+      <CarRaceEntrance
+        position={[9.8, 0, -7.5]}
+        rotation={[0, -Math.PI / 2, 0]}
+      />
+      <EvidenceMarker number="10" position={[9.2, 0, -8.6]} rotation={[0, -Math.PI / 2, 0]} />
 
       {/* ── Floor Stencil Inscription ── */}
       <Text

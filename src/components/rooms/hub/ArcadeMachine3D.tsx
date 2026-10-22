@@ -24,7 +24,7 @@ export function ArcadeMachine3D({
       id="arcade-cabinet-hub"
       type="easter-egg"
       position={position}
-      interactionPrompt="[E] PLAY ANSHIKA ARCADE & GAMES (HEARTS, RACER, PUZZLES)"
+      interactionPrompt="[E] PLAY ANSHIKA ARCADE (3D CAR RACE, 3D SHOOTER & PUZZLES)"
       onInteract={onOpenArcade}
       radius={3.8}
       showMarker={false}

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { THEME } from "@/lib/theme";
+import { useTransitionStore } from "@/engine/transitions/transitionStore";
 import { HeartShootingArena } from "./HeartShootingArena";
 import { MidnightCarRacer } from "./MidnightCarRacer";
 import { LoveWordGame } from "./LoveWordGame";
@@ -19,6 +20,8 @@ interface ArcadeModalProps {
 
 export function ArcadeModal({ isOpen, onClose, initialTab = "hearts" }: ArcadeModalProps) {
   const [activeTab, setActiveTab] = useState<ArcadeTab>(initialTab);
+
+  const enterRoom = useTransitionStore((s) => s.enterRoom);
 
   if (!isOpen) return null;
 
@@ -163,6 +166,87 @@ export function ArcadeModal({ isOpen, onClose, initialTab = "hearts" }: ArcadeMo
             );
           })}
         </div>
+
+        {/* 3D Experience Quick Switch Banner */}
+        {activeTab === "hearts" && (
+          <div
+            style={{
+              padding: "0.45rem 1rem",
+              background: "linear-gradient(90deg, rgba(244, 63, 94, 0.25), rgba(234, 179, 8, 0.15))",
+              borderBottom: "1px solid rgba(244, 63, 94, 0.4)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "0.5rem",
+              fontSize: "0.72rem",
+              fontFamily: "var(--font-geist-mono), monospace",
+            }}
+          >
+            <span style={{ color: "#fca5a5" }}>
+              ✨ Experience this in immersive <strong>3D with Teddy Bears, Cupcakes, Hearts & 11:11 Stars</strong>!
+            </span>
+            <button
+              onClick={() => {
+                onClose();
+                enterRoom("SHOOTING_ARENA");
+              }}
+              style={{
+                background: "#f43f5e",
+                color: "#ffffff",
+                border: "none",
+                borderRadius: 4,
+                padding: "0.3rem 0.75rem",
+                fontWeight: 900,
+                fontSize: "0.7rem",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                boxShadow: "0 0 12px rgba(244, 63, 94, 0.5)",
+              }}
+            >
+              LAUNCH 3D ARENA →
+            </button>
+          </div>
+        )}
+
+        {activeTab === "racer" && (
+          <div
+            style={{
+              padding: "0.45rem 1rem",
+              background: "linear-gradient(90deg, rgba(234, 179, 8, 0.25), rgba(244, 63, 94, 0.15))",
+              borderBottom: "1px solid rgba(234, 179, 8, 0.4)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "0.5rem",
+              fontSize: "0.72rem",
+              fontFamily: "var(--font-geist-mono), monospace",
+            }}
+          >
+            <span style={{ color: "#fef08a" }}>
+              🏎 Drive the 3D sports car in the <strong>Grand Stadium with cheering crowds, obstacles & video jumbotrons</strong>!
+            </span>
+            <button
+              onClick={() => {
+                onClose();
+                enterRoom("CAR_RACE");
+              }}
+              style={{
+                background: "#eab308",
+                color: "#000000",
+                border: "none",
+                borderRadius: 4,
+                padding: "0.3rem 0.75rem",
+                fontWeight: 900,
+                fontSize: "0.7rem",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                boxShadow: "0 0 12px rgba(234, 179, 8, 0.5)",
+              }}
+            >
+              LAUNCH 3D STADIUM →
+            </button>
+          </div>
+        )}
 
         {/* Active Game / Feature View Container */}
         <div style={{ flex: 1, minHeight: 0, position: "relative" }}>

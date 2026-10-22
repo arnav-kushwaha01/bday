@@ -714,3 +714,141 @@ export function GrandFinalPortalEntrance({
     </InteractableObject>
   );
 }
+
+// ─────────────────────────────────────────────────────────────────
+// 9. NEON TARGET PORTAL — Leading to 3D SHOOTING ARENA
+// ─────────────────────────────────────────────────────────────────
+export function ShootingArenaEntrance({
+  position,
+  rotation = [0, 0, 0],
+}: {
+  position: [number, number, number];
+  rotation?: [number, number, number];
+}) {
+  const enterRoom = useTransitionStore((s) => s.enterRoom);
+
+  return (
+    <InteractableObject
+      id="entrance-shooting-arena"
+      type="door"
+      position={position}
+      interactionPrompt="[E] ENTER 3D CUTE SHOOTING ARENA (TEDDY BEARS & HEARTS)"
+      onInteract={() => enterRoom("SHOOTING_ARENA")}
+      showMarker={true}
+    >
+      <group rotation={rotation}>
+        {/* Arch Frame */}
+        <mesh position={[0, 1.8, 0]} castShadow>
+          <boxGeometry args={[2.2, 3.6, 0.3]} />
+          <meshStandardMaterial color="#881337" roughness={0.4} metalness={0.6} />
+        </mesh>
+
+        {/* Inner Luminous Target Portal Portal Plane */}
+        <mesh position={[0, 1.6, -0.05]}>
+          <planeGeometry args={[1.6, 2.8]} />
+          <meshStandardMaterial color="#f43f5e" emissive="#e11d48" emissiveIntensity={0.6} />
+        </mesh>
+
+        {/* Concentric Neon Target Rings */}
+        <group position={[0, 1.6, -0.03]}>
+          <mesh>
+            <ringGeometry args={[0.7, 0.76, 32]} />
+            <meshBasicMaterial color="#ffffff" />
+          </mesh>
+          <mesh>
+            <ringGeometry args={[0.42, 0.48, 32]} />
+            <meshBasicMaterial color="#fde047" />
+          </mesh>
+          <mesh>
+            <circleGeometry args={[0.2, 24]} />
+            <meshBasicMaterial color="#f43f5e" />
+          </mesh>
+        </group>
+
+        {/* Header Marquee Sign */}
+        <group position={[0, 3.4, 0.1]}>
+          <mesh>
+            <boxGeometry args={[2.4, 0.45, 0.1]} />
+            <meshStandardMaterial color="#1c1917" metalness={0.8} />
+          </mesh>
+          <Text
+            position={[0, 0, 0.08]}
+            fontSize={0.12}
+            color="#fef08a"
+            fontWeight={900}
+            anchorX="center"
+            letterSpacing={0.15}
+          >
+            🎯 3D SHOOTING ARENA
+          </Text>
+        </group>
+      </group>
+    </InteractableObject>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────
+// 10. GRAND PRIX TUNNEL ENTRANCE — Leading to 3D CAR RACE STADIUM
+// ─────────────────────────────────────────────────────────────────
+export function CarRaceEntrance({
+  position,
+  rotation = [0, 0, 0],
+}: {
+  position: [number, number, number];
+  rotation?: [number, number, number];
+}) {
+  const enterRoom = useTransitionStore((s) => s.enterRoom);
+
+  return (
+    <InteractableObject
+      id="entrance-car-race"
+      type="door"
+      position={position}
+      interactionPrompt="[E] ENTER 3D CAR RACE STADIUM (CHEERING CROWDS & JUMBTRONS)"
+      onInteract={() => enterRoom("CAR_RACE")}
+      showMarker={true}
+    >
+      <group rotation={rotation}>
+        {/* Steel Gantry Frame */}
+        <mesh position={[0, 1.8, 0]} castShadow>
+          <boxGeometry args={[2.4, 3.6, 0.35]} />
+          <meshStandardMaterial color="#1e1b4b" roughness={0.3} metalness={0.8} />
+        </mesh>
+
+        {/* Tunnel Interior Void */}
+        <mesh position={[0, 1.6, -0.05]}>
+          <planeGeometry args={[1.7, 2.8]} />
+          <meshStandardMaterial color="#020617" emissive="#eab308" emissiveIntensity={0.3} />
+        </mesh>
+
+        {/* Checkered Flag Header Trim */}
+        <group position={[0, 3.4, 0.12]}>
+          <mesh>
+            <boxGeometry args={[2.6, 0.45, 0.1]} />
+            <meshStandardMaterial color="#09090b" metalness={0.7} />
+          </mesh>
+          <Text
+            position={[0, 0, 0.08]}
+            fontSize={0.12}
+            color="#facc15"
+            fontWeight={900}
+            anchorX="center"
+            letterSpacing={0.15}
+          >
+            🏎 3D CAR RACE STADIUM
+          </Text>
+        </group>
+
+        {/* Asphalt Apex Curb Indicators */}
+        <mesh position={[-0.88, 0.15, 0.2]}>
+          <boxGeometry args={[0.2, 0.3, 0.5]} />
+          <meshStandardMaterial color="#ef4444" />
+        </mesh>
+        <mesh position={[0.88, 0.15, 0.2]}>
+          <boxGeometry args={[0.2, 0.3, 0.5]} />
+          <meshStandardMaterial color="#ef4444" />
+        </mesh>
+      </group>
+    </InteractableObject>
+  );
+}

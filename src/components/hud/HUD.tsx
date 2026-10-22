@@ -88,6 +88,8 @@ export function HUD() {
     MAIN_CHARACTER: "MAIN CHARACTER // EVIDENCE 06",
     FUTURE: "UNWRITTEN CHAPTERS // EVIDENCE 07",
     FINAL: "THE FINAL FILE // CLASSIFIED",
+    SHOOTING_ARENA: "3D CUTE SHOOTING ARENA // 23 TARGETS",
+    CAR_RACE: "3D CAR RACE STADIUM // 2300M GRAND PRIX",
   };
 
   return (
@@ -400,7 +402,52 @@ export function HUD() {
                 <option value="MAIN_CHARACTER">[06] MAIN CHARACTER</option>
                 <option value="FUTURE">[07] UNWRITTEN CHAPTERS</option>
                 <option value="FINAL">[08] THE FINAL FILE</option>
+                <option value="SHOOTING_ARENA">[09] 🎯 3D SHOOTING ARENA</option>
+                <option value="CAR_RACE">[10] 🏎 3D CAR RACE STADIUM</option>
               </select>
+
+              {/* Direct Quick 3D Game Launchers */}
+              <button
+                onClick={() => enterRoom("SHOOTING_ARENA")}
+                style={{
+                  background: currentRoom === "SHOOTING_ARENA" ? "#f43f5e" : "rgba(244, 63, 94, 0.2)",
+                  border: "1px solid #f43f5e",
+                  borderRadius: 2,
+                  padding: "clamp(0.3rem, 1.5vw, 0.4rem) clamp(0.45rem, 2vw, 0.65rem)",
+                  color: currentRoom === "SHOOTING_ARENA" ? "#ffffff" : "#fca5a5",
+                  fontSize: "clamp(0.52rem, 1.6vw, 0.6rem)",
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  transition: "all 0.2s",
+                  whiteSpace: "nowrap",
+                }}
+                title="Enter 3D Cute Target Shooting Gallery (Teddy Bears, Hearts, Cupcakes)"
+              >
+                🎯 3D SHOOT
+              </button>
+
+              <button
+                onClick={() => enterRoom("CAR_RACE")}
+                style={{
+                  background: currentRoom === "CAR_RACE" ? "#eab308" : "rgba(234, 179, 8, 0.2)",
+                  border: "1px solid #eab308",
+                  borderRadius: 2,
+                  padding: "clamp(0.3rem, 1.5vw, 0.4rem) clamp(0.45rem, 2vw, 0.65rem)",
+                  color: currentRoom === "CAR_RACE" ? "#000000" : "#fef08a",
+                  fontSize: "clamp(0.52rem, 1.6vw, 0.6rem)",
+                  fontWeight: 700,
+                  letterSpacing: "0.1em",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  transition: "all 0.2s",
+                  whiteSpace: "nowrap",
+                }}
+                title="Enter 3D Stadium Car Race (Cheering crowds, videos, obstacles)"
+              >
+                🏎 3D RACE
+              </button>
 
               {/* View 3D Dossier Button */}
               <button
@@ -574,11 +621,56 @@ export function HUD() {
                 lineHeight: 1.8,
               }}
             >
-              <div>[W A S D] MOVE • [DRAG] LOOK • [Y] INSPECT / FLY</div>
-              <div>
-                [SHIFT] SPRINT • [E] INSPECT • [L] LIGHT/DARK • [ESC] BACK
-                {currentRoom === "DISTANCE" ? " • [M] 2D MAP • [WHEEL] ZOOM GLOBE" : ""}
-              </div>
+              {currentRoom === "CAR_RACE" ? (
+                <>
+                  <div style={{ color: "#facc15" }}>[W / ↑] ACCELERATE • [S / ↓] BRAKE • [A / D] STEER</div>
+                  <div>[SPACE] NITRO BOOST • [ESC / CLICK VAULT] RETURN TO ARCHIVE</div>
+                </>
+              ) : currentRoom === "SHOOTING_ARENA" ? (
+                <>
+                  <div style={{ color: "#f43f5e" }}>[CLICK / TAP] SHOOT CUTE TARGETS (TEDDY BEARS, CUPCAKES, HEARTS)</div>
+                  <div>POP 23 TARGETS TO UNLOCK HER SECRET LOVE TAPE • [ESC] RETURN</div>
+                </>
+              ) : (
+                <>
+                  <div>[W A S D] MOVE • [DRAG] LOOK • [Y] INSPECT / FLY</div>
+                  <div>
+                    [SHIFT] SPRINT • [E] INSPECT • [L] LIGHT/DARK • [ESC] BACK
+                    {currentRoom === "DISTANCE" ? " • [M] 2D MAP • [WHEEL] ZOOM GLOBE" : ""}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Dedicated 3D Shooting Arena Crosshair Reticle */}
+          {currentRoom === "SHOOTING_ARENA" && (
+            <div
+              style={{
+                position: "fixed",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                pointerEvents: "none",
+                zIndex: 55,
+                width: 32,
+                height: 32,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <div style={{ position: "absolute", width: 2, height: 18, background: "rgba(244, 63, 94, 0.9)" }} />
+              <div style={{ position: "absolute", width: 18, height: 2, background: "rgba(244, 63, 94, 0.9)" }} />
+              <div
+                style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: "50%",
+                  border: "1.5px solid #fde047",
+                  boxShadow: "0 0 8px rgba(253, 224, 71, 0.8)",
+                }}
+              />
             </div>
           )}
 

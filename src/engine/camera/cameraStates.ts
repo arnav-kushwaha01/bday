@@ -81,4 +81,18 @@ export const CAMERA_STATES: Record<RoomState, CameraState> = {
     transitionDuration: 3.2,
     easing: "power4.inOut",
   },
+  SHOOTING_ARENA: {
+    position: [0, 1.8, 6.0],
+    target: [0, 1.8, -4.0],
+    fov: 55,
+    transitionDuration: 2.2,
+    easing: "power3.inOut",
+  },
+  CAR_RACE: {
+    position: [0, 3.2, 7.5],
+    target: [0, 1.0, 0],
+    fov: 60,
+    transitionDuration: 2.0,
+    easing: "power2.inOut",
+  },
 };

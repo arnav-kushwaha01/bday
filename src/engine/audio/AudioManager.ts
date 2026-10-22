@@ -522,6 +522,32 @@ class AudioManager {
         ], 2800);
         break;
 
+      case "SHOOTING_ARENA":
+        // Sparkling arcade pop overture, playful celesta & celebratory chimes
+        this.createDrone([130.81, 196.0, 261.63], 0.05, "sine");
+        this.startMusicBoxTones([
+          523.25, 659.25, 783.99, 1046.5, 880.0, 698.46,
+        ], 1200);
+        this.startArpeggiatedPad([
+          [261.63, 329.63, 392.0, 523.25], // C
+          [220.0, 261.63, 329.63, 440.0],  // Am
+          [174.61, 220.0, 261.63, 349.23], // F
+          [196.0, 246.94, 293.66, 392.0],  // G
+        ], 2200);
+        break;
+
+      case "CAR_RACE":
+        // High-octane synthwave bass drone, driving pulse, stadium adrenaline
+        this.createDrone([55.0, 82.41, 110.0], 0.12, "sawtooth", 380);
+        this.createAirHiss(0.015, 1200);
+        this.startArpeggiatedPad([
+          [110.0, 164.81, 220.0, 277.18],  // A power
+          [98.0, 146.83, 196.0, 246.94],   // G power
+          [87.31, 130.81, 174.61, 220.0],  // F power
+          [98.0, 146.83, 196.0, 293.66],   // G power
+        ], 1800);
+        break;
+
       default:
         this.createDrone([65.4, 130.8], 0.05, "sine");
         break;
@@ -1361,6 +1387,126 @@ class AudioManager {
 
         osc.start(audioNow + idx * 0.08);
         osc.stop(audioNow + idx * 0.08 + 0.95);
+      });
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * Cute Target Pop Sound (Bubble chime + sparkle for popping teddy bears, hearts, cupcakes).
+   */
+  public playTargetPop() {
+    if (this.isMuted) return;
+    if (!this.ctx || !this.sfxGain) {
+      this.init();
+      return;
+    }
+
+    try {
+      const audioNow = this.ctx.currentTime;
+      // 1. Pop transient
+      const popOsc = this.ctx.createOscillator();
+      const popGain = this.ctx.createGain();
+      popOsc.type = "sine";
+      popOsc.frequency.setValueAtTime(320, audioNow);
+      popOsc.frequency.exponentialRampToValueAtTime(1240, audioNow + 0.08);
+
+      popGain.gain.setValueAtTime(0.001, audioNow);
+      popGain.gain.linearRampToValueAtTime(0.18 * this.sfxVolume, audioNow + 0.01);
+      popGain.gain.exponentialRampToValueAtTime(0.0001, audioNow + 0.12);
+
+      popOsc.connect(popGain);
+      popGain.connect(this.sfxGain);
+      popOsc.start(audioNow);
+      popOsc.stop(audioNow + 0.13);
+
+      // 2. High sparkle chime
+      const chimeOsc = this.ctx.createOscillator();
+      const chimeGain = this.ctx.createGain();
+      chimeOsc.type = "triangle";
+      chimeOsc.frequency.setValueAtTime(1760, audioNow + 0.03);
+      chimeOsc.frequency.exponentialRampToValueAtTime(2637, audioNow + 0.18);
+
+      chimeGain.gain.setValueAtTime(0.001, audioNow + 0.03);
+      chimeGain.gain.linearRampToValueAtTime(0.12 * this.sfxVolume, audioNow + 0.04);
+      chimeGain.gain.exponentialRampToValueAtTime(0.0001, audioNow + 0.35);
+
+      chimeOsc.connect(chimeGain);
+      chimeGain.connect(this.sfxGain);
+      chimeOsc.start(audioNow + 0.03);
+      chimeOsc.stop(audioNow + 0.36);
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * Vehicle Engine Rev / Nitro Boost SFX.
+   */
+  public playEngineRev() {
+    if (this.isMuted) return;
+    if (!this.ctx || !this.sfxGain) {
+      this.init();
+      return;
+    }
+
+    try {
+      const audioNow = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(65, audioNow);
+      osc.frequency.exponentialRampToValueAtTime(220, audioNow + 0.3);
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(280, audioNow);
+      filter.frequency.exponentialRampToValueAtTime(1200, audioNow + 0.3);
+
+      gain.gain.setValueAtTime(0.001, audioNow);
+      gain.gain.linearRampToValueAtTime(0.15 * this.sfxVolume, audioNow + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioNow + 0.45);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start(audioNow);
+      osc.stop(audioNow + 0.46);
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * Stadium Crowd Cheering Fanfare.
+   */
+  public playCrowdCheer() {
+    if (this.isMuted) return;
+    if (!this.ctx || !this.sfxGain) {
+      this.init();
+      return;
+    }
+
+    try {
+      const audioNow = this.ctx.currentTime;
+      [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+        if (!this.ctx || !this.sfxGain) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, audioNow + idx * 0.06);
+
+        gain.gain.setValueAtTime(0.001, audioNow + idx * 0.06);
+        gain.gain.linearRampToValueAtTime(0.1 * this.sfxVolume, audioNow + idx * 0.06 + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioNow + idx * 0.06 + 0.8);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+        osc.start(audioNow + idx * 0.06);
+        osc.stop(audioNow + idx * 0.06 + 0.82);
       });
     } catch {
       // ignore

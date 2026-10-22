@@ -277,8 +277,8 @@ export function PlayerController() {
       setMobileLookDelta(0, 0);
     }
 
-    // 2. If in menu (dossier view), focused on object, or in cinematic transition, skip free movement
-    if (experienceMode === "menu" || focusedTarget || isTransitioning || cinematicMode) {
+    // 2. If in menu (dossier view), focused on object, in cinematic transition, or in dedicated vehicle mode (CAR_RACE), skip free walking movement
+    if (experienceMode === "menu" || focusedTarget || isTransitioning || cinematicMode || currentRoom === "CAR_RACE") {
       return;
     }
 
@@ -391,6 +391,9 @@ export function PlayerController() {
         } else if (currentRoom === "FINAL") {
           boundX = 5.2;
           boundZ = 5.2;
+        } else if (currentRoom === "SHOOTING_ARENA") {
+          boundX = 8.5;
+          boundZ = 8.5;
         }
 
         if (currentRoom === "DISTANCE") {

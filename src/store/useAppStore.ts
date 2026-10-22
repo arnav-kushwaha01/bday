@@ -15,6 +15,8 @@ export const RoomStateSchema = z.enum([
   "MAIN_CHARACTER",
   "FUTURE",
   "FINAL",
+  "SHOOTING_ARENA",
+  "CAR_RACE",
 ]);
 export type RoomState = z.infer<typeof RoomStateSchema>;
 

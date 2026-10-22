@@ -13,6 +13,8 @@ const LittleThingsRoom = lazy(() => import("@/components/rooms/little-things/Lit
 const MainCharacterRoom = lazy(() => import("@/components/rooms/main-character/MainCharacterRoom"));
 const FutureRoom = lazy(() => import("@/components/rooms/future/FutureRoom"));
 const FinalRoom = lazy(() => import("@/components/rooms/final/FinalRoom"));
+const ShootingArenaRoom = lazy(() => import("@/components/rooms/shooting-arena/ShootingArenaRoom"));
+const CarRaceRoom = lazy(() => import("@/components/rooms/car-race/CarRaceRoom"));
 
 const ROOM_COMPONENTS: Record<RoomState, React.LazyExoticComponent<() => React.JSX.Element>> = {
   HUB: HubRoom,
@@ -24,6 +26,8 @@ const ROOM_COMPONENTS: Record<RoomState, React.LazyExoticComponent<() => React.J
   MAIN_CHARACTER: MainCharacterRoom,
   FUTURE: FutureRoom,
   FINAL: FinalRoom,
+  SHOOTING_ARENA: ShootingArenaRoom,
+  CAR_RACE: CarRaceRoom,
 };
 
 /**

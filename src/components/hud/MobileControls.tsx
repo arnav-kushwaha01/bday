@@ -16,6 +16,7 @@ export function MobileControls() {
     (s) => s.triggerActiveInteraction
   );
   const cinematicMode = useAppStore((s) => s.cinematicMode);
+  const currentRoom = useAppStore((s) => s.currentRoom);
 
   // Auto-detect touch capability
   useEffect(() => {
@@ -127,6 +128,177 @@ export function MobileControls() {
   }, []);
 
   if (!isTouchDevice || cinematicMode) return null;
+
+  // ─── Dedicated Mobile Touch Driving Controls for 3D Car Race ───
+  if (currentRoom === "CAR_RACE") {
+    return (
+      <>
+        {/* Left / Right Steering Buttons (Bottom Left) */}
+        <div
+          style={{
+            position: "fixed",
+            bottom: "max(1.5rem, env(safe-area-inset-bottom, 1.5rem))",
+            left: "max(1.2rem, env(safe-area-inset-left, 1.2rem))",
+            zIndex: 65,
+            display: "flex",
+            gap: "0.8rem",
+            pointerEvents: "auto",
+          }}
+        >
+          <button
+            onTouchStart={(e) => {
+              e.preventDefault();
+              window.dispatchEvent(new KeyboardEvent("keydown", { key: "a" }));
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              window.dispatchEvent(new KeyboardEvent("keyup", { key: "a" }));
+            }}
+            style={{
+              width: 62,
+              height: 62,
+              borderRadius: "50%",
+              background: "rgba(234, 179, 8, 0.25)",
+              border: "2px solid #eab308",
+              color: "#fef08a",
+              fontSize: "1.4rem",
+              fontWeight: 900,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              touchAction: "none",
+            }}
+            title="Steer Left"
+          >
+            ◀
+          </button>
+          <button
+            onTouchStart={(e) => {
+              e.preventDefault();
+              window.dispatchEvent(new KeyboardEvent("keydown", { key: "d" }));
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              window.dispatchEvent(new KeyboardEvent("keyup", { key: "d" }));
+            }}
+            style={{
+              width: 62,
+              height: 62,
+              borderRadius: "50%",
+              background: "rgba(234, 179, 8, 0.25)",
+              border: "2px solid #eab308",
+              color: "#fef08a",
+              fontSize: "1.4rem",
+              fontWeight: 900,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              touchAction: "none",
+            }}
+            title="Steer Right"
+          >
+            ▶
+          </button>
+        </div>
+
+        {/* Gas, Brake & Boost Buttons (Bottom Right) */}
+        <div
+          style={{
+            position: "fixed",
+            bottom: "max(1.5rem, env(safe-area-inset-bottom, 1.5rem))",
+            right: "max(1.2rem, env(safe-area-inset-right, 1.2rem))",
+            zIndex: 65,
+            display: "flex",
+            gap: "0.6rem",
+            alignItems: "flex-end",
+            pointerEvents: "auto",
+          }}
+        >
+          <button
+            onTouchStart={(e) => {
+              e.preventDefault();
+              window.dispatchEvent(new KeyboardEvent("keydown", { key: "s" }));
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              window.dispatchEvent(new KeyboardEvent("keyup", { key: "s" }));
+            }}
+            style={{
+              width: 54,
+              height: 54,
+              borderRadius: "50%",
+              background: "rgba(239, 68, 68, 0.35)",
+              border: "2px solid #ef4444",
+              color: "#fca5a5",
+              fontSize: "0.65rem",
+              fontWeight: 900,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              touchAction: "none",
+            }}
+            title="Brake"
+          >
+            BRAKE
+          </button>
+          <button
+            onTouchStart={(e) => {
+              e.preventDefault();
+              window.dispatchEvent(new KeyboardEvent("keydown", { key: " " }));
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              window.dispatchEvent(new KeyboardEvent("keyup", { key: " " }));
+            }}
+            style={{
+              width: 54,
+              height: 54,
+              borderRadius: "50%",
+              background: "rgba(56, 189, 248, 0.35)",
+              border: "2px solid #38bdf8",
+              color: "#38bdf8",
+              fontSize: "0.65rem",
+              fontWeight: 900,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              touchAction: "none",
+            }}
+            title="Nitro Boost"
+          >
+            NITRO
+          </button>
+          <button
+            onTouchStart={(e) => {
+              e.preventDefault();
+              window.dispatchEvent(new KeyboardEvent("keydown", { key: "w" }));
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              window.dispatchEvent(new KeyboardEvent("keyup", { key: "w" }));
+            }}
+            style={{
+              width: 66,
+              height: 66,
+              borderRadius: "50%",
+              background: "rgba(34, 197, 94, 0.35)",
+              border: "2px solid #22c55e",
+              color: "#86efac",
+              fontSize: "0.85rem",
+              fontWeight: 900,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              touchAction: "none",
+            }}
+            title="Accelerate Gas"
+          >
+            GAS ▲
+          </button>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
