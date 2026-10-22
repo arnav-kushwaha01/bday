@@ -392,8 +392,8 @@ export function PlayerController() {
           boundX = 5.2;
           boundZ = 5.2;
         } else if (currentRoom === "SHOOTING_ARENA") {
-          boundX = 8.5;
-          boundZ = 8.5;
+          boundX = 24.0;
+          boundZ = 24.0;
         }
 
         if (currentRoom === "DISTANCE") {

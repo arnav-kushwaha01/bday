@@ -623,13 +623,13 @@ export function HUD() {
             >
               {currentRoom === "CAR_RACE" ? (
                 <>
-                  <div style={{ color: "#facc15" }}>[W / ↑] ACCELERATE • [S / ↓] BRAKE • [A / D] STEER</div>
-                  <div>[SPACE] NITRO BOOST • [ESC / CLICK VAULT] RETURN TO ARCHIVE</div>
+                  <div style={{ color: "#facc15", fontWeight: 700 }}>🏎 MEGA STADIUM CIRCUIT // [W / ↑] GAS • [S / ↓] BRAKE • [A / D] STEER</div>
+                  <div>⚡ [SPACE] NITRO BOOST • HIT CHECKPOINTS & POWERUPS TO COMPLETE THE LAP & WIN!</div>
                 </>
               ) : currentRoom === "SHOOTING_ARENA" ? (
                 <>
-                  <div style={{ color: "#f43f5e" }}>[CLICK / TAP] SHOOT CUTE TARGETS (TEDDY BEARS, CUPCAKES, HEARTS)</div>
-                  <div>POP 23 TARGETS TO UNLOCK HER SECRET LOVE TAPE • [ESC] RETURN</div>
+                  <div style={{ color: "#f43f5e", fontWeight: 700 }}>🎯 3D CUTE SHOOTER // [CLICK / TAP] FIRE • [R] RELOAD • [W A S D] MOVE • [SHIFT] SPRINT</div>
+                  <div>HUNT 23 CUTE VILLAINS (ANGRY BIRDIE, OVERTHINKER, BANDIT TEDDY) & 6 CLUES!</div>
                 </>
               ) : (
                 <>

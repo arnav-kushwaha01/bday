@@ -11,130 +11,173 @@ import { getVideoUrl, getPhotoUrl } from "@/lib/assetManager";
 import { ArchivalMediaMesh } from "@/components/media/ArchivalMediaMesh";
 import { useTransitionStore } from "@/engine/transitions/transitionStore";
 
-// ─── 3D Drivable Vehicle (Anshika's Midnight Racer / Scooty) ────────
+// ─── 3D High-End Aerodynamic Hypercar ──────────────────────────────
 
-function AnshikaMidnightRacer({
+function AnshikaHypercar({
   carRef,
   speed,
   steerAngle,
+  isShieldActive,
+  isNitroActive,
 }: {
   carRef: React.RefObject<THREE.Group | null>;
   speed: number;
   steerAngle: number;
+  isShieldActive: boolean;
+  isNitroActive: boolean;
 }) {
-  const frontLeftWheel = useRef<THREE.Mesh>(null);
-  const frontRightWheel = useRef<THREE.Mesh>(null);
+  const frontLeftWheel = useRef<THREE.Group>(null);
+  const frontRightWheel = useRef<THREE.Group>(null);
   const rearWheels = useRef<THREE.Group>(null);
   const exhaustGlow = useRef<THREE.PointLight>(null);
+  const underglow = useRef<THREE.PointLight>(null);
 
   useFrame((_, delta) => {
     const wheelRot = (speed / 0.35) * delta;
     if (frontLeftWheel.current) {
       frontLeftWheel.current.rotation.x += wheelRot;
-      frontLeftWheel.current.rotation.y = steerAngle * 0.45;
+      frontLeftWheel.current.rotation.y = steerAngle * 0.55;
     }
     if (frontRightWheel.current) {
       frontRightWheel.current.rotation.x += wheelRot;
-      frontRightWheel.current.rotation.y = steerAngle * 0.45;
+      frontRightWheel.current.rotation.y = steerAngle * 0.55;
     }
     if (rearWheels.current) {
       rearWheels.current.rotation.x += wheelRot;
     }
     if (exhaustGlow.current) {
-      exhaustGlow.current.intensity = Math.abs(speed) > 2 ? 1.8 + Math.random() * 0.8 : 0.4;
+      exhaustGlow.current.intensity = isNitroActive
+        ? 3.5 + Math.random() * 1.5
+        : Math.abs(speed) > 2
+        ? 1.5 + Math.random() * 0.5
+        : 0.2;
+    }
+    if (underglow.current) {
+      underglow.current.intensity = isShieldActive ? 3.0 : 1.2;
     }
   });
 
   return (
     <group ref={carRef} position={[0, 0, 0]}>
-      {/* ── Aerodynamic Main Chassis (Metallic Rose Gold & Noir) ── */}
-      <mesh position={[0, 0.45, 0]} castShadow>
-        <boxGeometry args={[1.7, 0.42, 3.8]} />
+      {/* ── Main Carbon/Metallic Chassis (Sculpted Hypercar Profile) ── */}
+      <mesh position={[0, 0.42, 0]} castShadow>
+        <boxGeometry args={[1.85, 0.38, 4.4]} />
         <meshStandardMaterial
-          color="#be185d"
-          metalness={0.7}
-          roughness={0.2}
-          envMapIntensity={1.5}
+          color="#9f1239"
+          metalness={0.85}
+          roughness={0.15}
+          envMapIntensity={2.0}
         />
       </mesh>
 
-      {/* Sleek Cockpit Canopy / Glass Windshield */}
-      <mesh position={[0, 0.8, -0.2]} castShadow>
-        <boxGeometry args={[1.35, 0.38, 1.8]} />
-        <meshStandardMaterial
-          color="#0f172a"
-          metalness={0.9}
-          roughness={0.1}
-        />
+      {/* Aerodynamic Front Nose Cone / Low Splitter */}
+      <mesh position={[0, 0.28, 2.1]} castShadow>
+        <boxGeometry args={[1.75, 0.14, 0.8]} />
+        <meshStandardMaterial color="#09090b" metalness={0.9} roughness={0.2} />
+      </mesh>
+      {/* Carbon Side Canards */}
+      <mesh position={[-0.92, 0.32, 1.9]} rotation={[0, 0.2, 0.15]}>
+        <boxGeometry args={[0.1, 0.1, 0.45]} />
+        <meshStandardMaterial color="#18181b" />
+      </mesh>
+      <mesh position={[0.92, 0.32, 1.9]} rotation={[0, -0.2, -0.15]}>
+        <boxGeometry args={[0.1, 0.1, 0.45]} />
+        <meshStandardMaterial color="#18181b" />
       </mesh>
 
-      {/* Front Hood Scoop */}
-      <mesh position={[0, 0.52, 1.2]} rotation={[0.1, 0, 0]}>
-        <boxGeometry args={[1.4, 0.16, 1.2]} />
-        <meshStandardMaterial color="#881337" metalness={0.6} roughness={0.3} />
-      </mesh>
-
-      {/* Rear High-Downforce Spoiler */}
-      <group position={[0, 1.05, -1.7]}>
-        {/* Spoiler wing */}
+      {/* Sleek Curved Cockpit Glass Canopy */}
+      <group position={[0, 0.74, -0.1]}>
         <mesh castShadow>
-          <boxGeometry args={[1.9, 0.08, 0.45]} />
-          <meshStandardMaterial color="#e11d48" metalness={0.8} roughness={0.2} />
+          <boxGeometry args={[1.4, 0.38, 2.1]} />
+          <meshStandardMaterial
+            color="#020617"
+            metalness={0.95}
+            roughness={0.05}
+          />
         </mesh>
-        {/* Spoiler struts */}
-        <mesh position={[-0.6, -0.22, 0]}>
-          <boxGeometry args={[0.06, 0.36, 0.1]} />
-          <meshStandardMaterial color="#18181b" metalness={0.8} />
-        </mesh>
-        <mesh position={[0.6, -0.22, 0]}>
-          <boxGeometry args={[0.06, 0.36, 0.1]} />
-          <meshStandardMaterial color="#18181b" metalness={0.8} />
+        {/* Roof Air Intake Scoop */}
+        <mesh position={[0, 0.24, -0.2]}>
+          <boxGeometry args={[0.45, 0.12, 0.65]} />
+          <meshStandardMaterial color="#0f172a" metalness={0.8} />
         </mesh>
       </group>
 
-      {/* Dual Neon Headlights (White-Gold LED) */}
-      <group position={[0, 0.46, 1.92]}>
-        <mesh position={[-0.65, 0, 0]}>
-          <sphereGeometry args={[0.12, 12, 12]} />
+      {/* Muscular Rear Wheel Arches / Haunches */}
+      <mesh position={[-0.96, 0.5, -1.1]}>
+        <boxGeometry args={[0.2, 0.38, 1.4]} />
+        <meshStandardMaterial color="#881337" metalness={0.8} roughness={0.2} />
+      </mesh>
+      <mesh position={[0.96, 0.5, -1.1]}>
+        <boxGeometry args={[0.2, 0.38, 1.4]} />
+        <meshStandardMaterial color="#881337" metalness={0.8} roughness={0.2} />
+      </mesh>
+
+      {/* Aggressive GT Rear Carbon Wing */}
+      <group position={[0, 1.15, -2.1]}>
+        {/* Main curved foil */}
+        <mesh castShadow>
+          <boxGeometry args={[2.2, 0.08, 0.52]} />
+          <meshStandardMaterial color="#18181b" metalness={0.9} roughness={0.1} />
+        </mesh>
+        {/* Carbon Wing Endplates */}
+        <mesh position={[-1.1, 0.05, 0]}>
+          <boxGeometry args={[0.04, 0.28, 0.58]} />
+          <meshStandardMaterial color="#e11d48" metalness={0.7} />
+        </mesh>
+        <mesh position={[1.1, 0.05, 0]}>
+          <boxGeometry args={[0.04, 0.28, 0.58]} />
+          <meshStandardMaterial color="#e11d48" metalness={0.7} />
+        </mesh>
+        {/* Twin Vertical Mount Uprights */}
+        <mesh position={[-0.55, -0.32, 0]}>
+          <boxGeometry args={[0.06, 0.55, 0.18]} />
+          <meshStandardMaterial color="#27272a" metalness={0.8} />
+        </mesh>
+        <mesh position={[0.55, -0.32, 0]}>
+          <boxGeometry args={[0.06, 0.55, 0.18]} />
+          <meshStandardMaterial color="#27272a" metalness={0.8} />
+        </mesh>
+      </group>
+
+      {/* Projector LED Headlights & DRL Light Strips */}
+      <group position={[0, 0.44, 2.18]}>
+        <mesh position={[-0.72, 0, 0]}>
+          <boxGeometry args={[0.28, 0.08, 0.06]} />
           <meshBasicMaterial color="#fef08a" />
         </mesh>
-        <mesh position={[0.65, 0, 0]}>
-          <sphereGeometry args={[0.12, 12, 12]} />
+        <mesh position={[0.72, 0, 0]}>
+          <boxGeometry args={[0.28, 0.08, 0.06]} />
           <meshBasicMaterial color="#fef08a" />
         </mesh>
         <spotLight
-          position={[0, 0.2, 0]}
-          target-position={[0, 0, 15]}
+          position={[0, 0.3, 0]}
+          target-position={[0, 0, 25]}
           color="#fef08a"
-          intensity={3.5}
-          distance={28}
-          angle={0.6}
-          penumbra={0.4}
+          intensity={4.5}
+          distance={45}
+          angle={0.65}
+          penumbra={0.3}
         />
       </group>
 
-      {/* Dual Neon Taillights (Glowing Red) */}
-      <group position={[0, 0.5, -1.92]}>
-        <mesh position={[-0.65, 0, 0]}>
-          <boxGeometry args={[0.25, 0.08, 0.04]} />
+      {/* Full-Width Rear LED Tail Light Strip */}
+      <group position={[0, 0.52, -2.22]}>
+        <mesh>
+          <boxGeometry args={[1.7, 0.08, 0.04]} />
           <meshBasicMaterial color="#ef4444" />
         </mesh>
-        <mesh position={[0.65, 0, 0]}>
-          <boxGeometry args={[0.25, 0.08, 0.04]} />
-          <meshBasicMaterial color="#ef4444" />
-        </mesh>
-        <pointLight position={[0, 0, -0.1]} color="#ef4444" intensity={1.2} distance={3.5} />
+        <pointLight position={[0, 0, -0.1]} color="#ef4444" intensity={1.8} distance={5} />
       </group>
 
-      {/* License Plate: "ANSHIKA 23" */}
-      <group position={[0, 0.32, -1.93]}>
+      {/* Golden Vanity License Plate: "ANSHIKA 23" */}
+      <group position={[0, 0.32, -2.23]}>
         <mesh>
-          <boxGeometry args={[0.65, 0.18, 0.02]} />
-          <meshBasicMaterial color="#fef08a" />
+          <boxGeometry args={[0.7, 0.2, 0.02]} />
+          <meshBasicMaterial color="#fde047" />
         </mesh>
         <Text
           position={[0, 0, 0.02]}
-          fontSize={0.075}
+          fontSize={0.08}
           color="#09090b"
           fontWeight={900}
           anchorX="center"
@@ -144,128 +187,166 @@ function AnshikaMidnightRacer({
         </Text>
       </group>
 
-      {/* Front Wheels (Steerable) */}
-      <mesh
-        ref={frontLeftWheel}
-        position={[-0.92, 0.32, 1.2]}
-        rotation={[0, 0, Math.PI / 2]}
-        castShadow
-      >
-        <cylinderGeometry args={[0.32, 0.32, 0.28, 16]} />
-        <meshStandardMaterial color="#18181b" roughness={0.8} />
-      </mesh>
-      <mesh
-        ref={frontRightWheel}
-        position={[0.92, 0.32, 1.2]}
-        rotation={[0, 0, Math.PI / 2]}
-        castShadow
-      >
-        <cylinderGeometry args={[0.32, 0.32, 0.28, 16]} />
-        <meshStandardMaterial color="#18181b" roughness={0.8} />
-      </mesh>
-
-      {/* Rear Wheels */}
-      <group ref={rearWheels}>
-        <mesh
-          position={[-0.94, 0.35, -1.1]}
-          rotation={[0, 0, Math.PI / 2]}
-          castShadow
-        >
-          <cylinderGeometry args={[0.35, 0.35, 0.32, 16]} />
-          <meshStandardMaterial color="#18181b" roughness={0.8} />
+      {/* Front Left Wheel Assembly with Brake Caliper */}
+      <group ref={frontLeftWheel} position={[-0.98, 0.34, 1.4]}>
+        <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
+          <cylinderGeometry args={[0.34, 0.34, 0.3, 20]} />
+          <meshStandardMaterial color="#09090b" roughness={0.85} />
         </mesh>
-        <mesh
-          position={[0.94, 0.35, -1.1]}
-          rotation={[0, 0, Math.PI / 2]}
-          castShadow
-        >
-          <cylinderGeometry args={[0.35, 0.35, 0.32, 16]} />
-          <meshStandardMaterial color="#18181b" roughness={0.8} />
+        {/* Silver Alloy Rim */}
+        <mesh rotation={[0, 0, Math.PI / 2]} position={[-0.14, 0, 0]}>
+          <cylinderGeometry args={[0.22, 0.22, 0.05, 12]} />
+          <meshStandardMaterial color="#d4d4d8" metalness={0.9} roughness={0.2} />
+        </mesh>
+        {/* Red Brake Caliper */}
+        <mesh position={[0, 0.16, 0]}>
+          <boxGeometry args={[0.08, 0.14, 0.18]} />
+          <meshBasicMaterial color="#dc2626" />
         </mesh>
       </group>
 
-      {/* Dual Exhaust Pipes with Glowing Nitro Afterburner */}
-      <group position={[0, 0.26, -1.95]}>
-        <mesh position={[-0.35, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.07, 0.07, 0.2, 12]} />
-          <meshStandardMaterial color="#3f3f46" metalness={0.9} />
+      {/* Front Right Wheel Assembly with Brake Caliper */}
+      <group ref={frontRightWheel} position={[0.98, 0.34, 1.4]}>
+        <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
+          <cylinderGeometry args={[0.34, 0.34, 0.3, 20]} />
+          <meshStandardMaterial color="#09090b" roughness={0.85} />
         </mesh>
-        <mesh position={[0.35, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
-          <cylinderGeometry args={[0.07, 0.07, 0.2, 12]} />
-          <meshStandardMaterial color="#3f3f46" metalness={0.9} />
+        <mesh rotation={[0, 0, Math.PI / 2]} position={[0.14, 0, 0]}>
+          <cylinderGeometry args={[0.22, 0.22, 0.05, 12]} />
+          <meshStandardMaterial color="#d4d4d8" metalness={0.9} roughness={0.2} />
         </mesh>
+        <mesh position={[0, 0.16, 0]}>
+          <boxGeometry args={[0.08, 0.14, 0.18]} />
+          <meshBasicMaterial color="#dc2626" />
+        </mesh>
+      </group>
+
+      {/* Rear Wheel Assembly */}
+      <group ref={rearWheels}>
+        <mesh
+          position={[-1.02, 0.36, -1.2]}
+          rotation={[0, 0, Math.PI / 2]}
+          castShadow
+        >
+          <cylinderGeometry args={[0.36, 0.36, 0.36, 20]} />
+          <meshStandardMaterial color="#09090b" roughness={0.85} />
+        </mesh>
+        <mesh
+          position={[1.02, 0.36, -1.2]}
+          rotation={[0, 0, Math.PI / 2]}
+          castShadow
+        >
+          <cylinderGeometry args={[0.36, 0.36, 0.36, 0.36, 20]} />
+          <meshStandardMaterial color="#09090b" roughness={0.85} />
+        </mesh>
+      </group>
+
+      {/* Quad Titanium Exhaust Tips & Animated Nitro Afterburners */}
+      <group position={[0, 0.24, -2.24]}>
+        {[-0.45, -0.22, 0.22, 0.45].map((x, i) => (
+          <mesh key={i} position={[x, 0, 0]} rotation={[Math.PI / 2, 0, 0]}>
+            <cylinderGeometry args={[0.075, 0.075, 0.25, 12]} />
+            <meshStandardMaterial color="#38bdf8" metalness={0.95} roughness={0.1} />
+          </mesh>
+        ))}
         <pointLight
           ref={exhaustGlow}
           position={[0, 0, -0.4]}
-          color="#38bdf8"
+          color={isNitroActive ? "#06b6d4" : "#f59e0b"}
           intensity={1.5}
-          distance={4}
+          distance={5}
         />
       </group>
+
+      {/* Neon Underglow Halo */}
+      <pointLight
+        ref={underglow}
+        position={[0, 0.1, 0]}
+        color={isShieldActive ? "#38bdf8" : "#ec4899"}
+        intensity={1.4}
+        distance={3.5}
+      />
+
+      {/* Protective Shield Bubble (when active) */}
+      {isShieldActive && (
+        <mesh position={[0, 0.8, 0]}>
+          <sphereGeometry args={[2.8, 20, 20]} />
+          <meshBasicMaterial
+            color="#38bdf8"
+            transparent
+            opacity={0.25}
+            wireframe
+          />
+        </mesh>
+      )}
     </group>
   );
 }
 
-// ─── Stadium Grandstands with Animated Cheering Crowds & Banners ────
+// ─── Giant Stadium Grandstands with Animated Fans & Banners ─────────
 
-function StadiumGrandstand({
+function MegaStadiumGrandstand({
   position,
   rotation,
   bannerText,
+  width = 60,
 }: {
   position: [number, number, number];
   rotation: [number, number, number];
   bannerText: string;
+  width?: number;
 }) {
   return (
     <group position={position} rotation={rotation}>
-      {/* 3 Tiered Bleacher Steps */}
-      {[0, 1, 2].map((tier) => (
-        <group key={tier} position={[0, tier * 1.1 + 0.6, -tier * 1.4]}>
-          {/* Concrete Bleacher Bench */}
+      {/* 5 Tiered Massive Bleachers */}
+      {[0, 1, 2, 3, 4].map((tier) => (
+        <group key={tier} position={[0, tier * 1.6 + 1.0, -tier * 2.2]}>
+          {/* Concrete Tier Shelf */}
           <mesh receiveShadow castShadow>
-            <boxGeometry args={[24, 0.8, 1.6]} />
+            <boxGeometry args={[width, 1.2, 2.4]} />
             <meshStandardMaterial color="#27272a" roughness={0.8} />
           </mesh>
-          {/* Seated Crowd Silhouettes (Cheering 3D spectators) */}
-          {[-9, -6, -3, 0, 3, 6, 9].map((cx, i) => (
-            <group key={i} position={[cx, 0.65, 0]}>
-              {/* Torso */}
-              <mesh>
-                <capsuleGeometry args={[0.22, 0.45, 6, 6]} />
-                <meshStandardMaterial
-                  color={
-                    (tier + i) % 3 === 0
-                      ? "#f43f5e"
-                      : (tier + i) % 3 === 1
-                      ? "#facc15"
-                      : "#38bdf8"
-                  }
-                  roughness={0.7}
-                />
-              </mesh>
-              {/* Head */}
-              <mesh position={[0, 0.42, 0]}>
-                <sphereGeometry args={[0.16, 8, 8]} />
-                <meshStandardMaterial color="#fcd34d" roughness={0.6} />
-              </mesh>
-            </group>
-          ))}
+          {/* Crowd Rows (Cheering animated spectators) */}
+          {[-width * 0.4, -width * 0.25, -width * 0.1, 0, width * 0.1, width * 0.25, width * 0.4].map(
+            (cx, i) => (
+              <group key={i} position={[cx, 0.95, 0]}>
+                <mesh>
+                  <capsuleGeometry args={[0.3, 0.6, 6, 6]} />
+                  <meshStandardMaterial
+                    color={
+                      (tier + i) % 4 === 0
+                        ? "#f43f5e"
+                        : (tier + i) % 4 === 1
+                        ? "#facc15"
+                        : (tier + i) % 4 === 2
+                        ? "#38bdf8"
+                        : "#22c55e"
+                    }
+                    roughness={0.7}
+                  />
+                </mesh>
+                <mesh position={[0, 0.58, 0]}>
+                  <sphereGeometry args={[0.22, 8, 8]} />
+                  <meshStandardMaterial color="#fde047" roughness={0.6} />
+                </mesh>
+              </group>
+            )
+          )}
         </group>
       ))}
 
-      {/* Front Glowing Stadium Banner */}
-      <group position={[0, 1.2, 1.0]}>
+      {/* Front Glowing LED Digital Ribbon Banner */}
+      <group position={[0, 1.8, 1.4]}>
         <mesh>
-          <boxGeometry args={[22, 1.0, 0.1]} />
-          <meshStandardMaterial color="#18181b" roughness={0.3} metalness={0.6} />
+          <boxGeometry args={[width - 2, 1.4, 0.15]} />
+          <meshStandardMaterial color="#09090b" roughness={0.3} metalness={0.7} />
         </mesh>
         <Text
-          position={[0, 0, 0.08]}
-          fontSize={0.42}
+          position={[0, 0, 0.1]}
+          fontSize={0.65}
           color="#fef08a"
           fontWeight={900}
-          letterSpacing={0.12}
+          letterSpacing={0.15}
           anchorX="center"
           anchorY="middle"
         >
@@ -276,86 +357,102 @@ function StadiumGrandstand({
   );
 }
 
-// ─── Stadium Floodlight Tower ────────────────────────────────────────
+// ─── High-Mast Stadium Floodlight Tower ──────────────────────────────
 
-function FloodlightTower({ position }: { position: [number, number, number] }) {
+function HighMastTower({ position }: { position: [number, number, number] }) {
   return (
     <group position={position}>
-      {/* Lattice Steel Mast */}
-      <mesh position={[0, 7.5, 0]} castShadow>
-        <cylinderGeometry args={[0.3, 0.5, 15, 8]} />
+      {/* High-tension steel pylon */}
+      <mesh position={[0, 12, 0]} castShadow>
+        <cylinderGeometry args={[0.45, 0.8, 24, 8]} />
         <meshStandardMaterial color="#52525b" metalness={0.8} roughness={0.3} />
       </mesh>
-      {/* Floodlight Bank Frame */}
-      <mesh position={[0, 15, 0]}>
-        <boxGeometry args={[3.2, 1.8, 0.6]} />
-        <meshStandardMaterial color="#27272a" metalness={0.6} />
+      {/* Crossbar Platform */}
+      <mesh position={[0, 24, 0]}>
+        <boxGeometry args={[5.5, 2.4, 1.0]} />
+        <meshStandardMaterial color="#18181b" metalness={0.8} />
       </mesh>
-      {/* 4 Glowing Floodlight Lamps */}
-      {[-1, 1].map((x) =>
-        [-0.4, 0.4].map((y) => (
-          <mesh key={`${x}-${y}`} position={[x, 15 + y, 0.35]}>
-            <sphereGeometry args={[0.32, 12, 12]} />
+      {/* 6 High-Power Stadium Lamps */}
+      {[-1.8, 0, 1.8].map((x) =>
+        [-0.5, 0.5].map((y) => (
+          <mesh key={`${x}-${y}`} position={[x, 24 + y, 0.55]}>
+            <sphereGeometry args={[0.45, 12, 12]} />
             <meshBasicMaterial color="#ffffff" />
           </mesh>
         ))
       )}
       <spotLight
-        position={[0, 15, 0.6]}
+        position={[0, 24, 1]}
         target-position={[0, 0, 0]}
-        intensity={2.8}
+        intensity={3.8}
         color="#fffbeb"
-        distance={45}
-        angle={0.65}
-        penumbra={0.5}
+        distance={95}
+        angle={0.7}
+        penumbra={0.4}
       />
     </group>
   );
 }
 
-// ─── Obstacles & Collectibles along Track ────────────────────────────
+// ─── Circuit Checkpoints & Waypoint Definitions ──────────────────────
 
-interface TrackObstacle {
+interface CircuitWaypoint {
+  index: number;
+  name: string;
+  pos: [number, number]; // [x, z]
+  radius: number;
+}
+
+const CIRCUIT_CHECKPOINTS: CircuitWaypoint[] = [
+  { index: 0, name: "START / FINISH LINE", pos: [0, -70], radius: 18 },
+  { index: 1, name: "TURN 1 APEX (EAST)", pos: [55, -20], radius: 24 },
+  { index: 2, name: "BACKSTRETCH (NORTH)", pos: [35, 60], radius: 24 },
+  { index: 3, name: "HAIRPIN CHICANE (WEST)", pos: [-45, 55], radius: 24 },
+  { index: 4, name: "FINAL CORNER (WEST)", pos: [-50, -25], radius: 24 },
+];
+
+// ─── Obstacles & Power-Up Items ─────────────────────────────────────
+
+interface TrackPowerUp {
   id: number;
-  type: "curfew" | "distance" | "cone";
-  distanceM: number;
-  xOffset: number;
+  type: "nitro" | "shield" | "star" | "heart";
+  pos: [number, number, number];
+}
+
+interface CircuitObstacle {
+  id: number;
+  type: "curfew" | "distance" | "cone" | "oilslick";
+  pos: [number, number, number];
   label: string;
 }
-
-interface TrackCollectible {
-  id: number;
-  type: "heart" | "star" | "cupcake";
-  distanceM: number;
-  xOffset: number;
-  points: number;
-}
-
-// ─── Main 3D Car Race Room ──────────────────────────────────────────
 
 export default function CarRaceRoom() {
   const { camera } = useThree();
   const carRef = useRef<THREE.Group>(null);
 
-  // Vehicle Dynamics State
-  const [speed, setSpeed] = useState<number>(0);
-  const [distanceTraveled, setDistanceTraveled] = useState<number>(0);
+  // Gameplay State
+  const [speedKmh, setSpeedKmh] = useState<number>(0);
+  const [currentLap, setCurrentLap] = useState<number>(1);
+  const [currentCheckpoint, setCurrentCheckpoint] = useState<number>(1);
+  const [lapTime, setLapTime] = useState<number>(0);
+  const [bestLapTime, setBestLapTime] = useState<number | null>(null);
   const [score, setScore] = useState<number>(0);
   const [nitroCount, setNitroCount] = useState<number>(3);
   const [isNitroActive, setIsNitroActive] = useState<boolean>(false);
-  const [hasFinishedRace, setHasFinishedRace] = useState<boolean>(false);
-  const [hitWarning, setHitWarning] = useState<string | null>(null);
+  const [isShieldActive, setIsShieldActive] = useState<boolean>(false);
+  const [hasWonGrandPrix, setHasWonGrandPrix] = useState<boolean>(false);
+  const [hudNotice, setHudNotice] = useState<string | null>(null);
 
-  // Physics refs
-  const carPos = useRef(new THREE.Vector3(0, 0, -20));
+  // Dynamic Car Kinematics
+  const carPos = useRef(new THREE.Vector3(0, 0, -68));
   const carYaw = useRef<number>(0);
-  const currentSpeed = useRef<number>(0);
-  const steerInput = useRef<number>(0);
-  const throttleInput = useRef<number>(0);
-  const collectedIds = useRef<Set<number>>(new Set());
-  const bumpedObstacleIds = useRef<Set<number>>(new Set());
+  const carSpeed = useRef<number>(0);
+  const carSteer = useRef<number>(0);
+  const slipAngle = useRef<number>(0);
+  const collectedPowerupIds = useRef<Set<number>>(new Set());
+  const triggeredObstacleIds = useRef<Set<number>>(new Set());
 
-  // Input listeners
+  // Input listener
   const keys = useRef<{ [k: string]: boolean }>({});
 
   useEffect(() => {
@@ -365,7 +462,7 @@ export default function CarRaceRoom() {
         setIsNitroActive(true);
         setNitroCount((n) => n - 1);
         soundEngine.playEngineRev();
-        setTimeout(() => setIsNitroActive(false), 2400);
+        setTimeout(() => setIsNitroActive(false), 2800);
       }
     };
     const handleUp = (e: KeyboardEvent) => {
@@ -379,290 +476,307 @@ export default function CarRaceRoom() {
     };
   }, [nitroCount, isNitroActive]);
 
-  // Track procedural obstacles across 2,300 meters
-  const obstacles: TrackObstacle[] = useMemo(() => {
-    const list: TrackObstacle[] = [];
-    const types: ("curfew" | "distance" | "cone")[] = ["curfew", "distance", "cone"];
-    for (let d = 150; d < 2250; d += 140) {
-      const type = types[(d / 140) % 3];
-      const xOffset = ((d % 3) - 1) * 3.8;
-      const label =
-        type === "curfew"
-          ? "HOSTEL CURFEW 9:00 PM"
-          : type === "distance"
-          ? "1,540 KM DISTANCE GATE"
-          : "OVERTHINKING HAZARD";
-      list.push({ id: d, type, distanceM: d, xOffset, label });
-    }
-    return list;
-  }, []);
+  // Powerups placed around the huge circuit track
+  const powerUps: TrackPowerUp[] = useMemo(
+    () => [
+      { id: 101, type: "nitro", pos: [20, 0.8, -60] },
+      { id: 102, type: "heart", pos: [52, 0.8, -35] },
+      { id: 103, type: "star", pos: [55, 0.8, 15] },
+      { id: 104, type: "nitro", pos: [45, 0.8, 55] },
+      { id: 105, type: "shield", pos: [0, 0.8, 72] },
+      { id: 106, type: "star", pos: [-42, 0.8, 55] },
+      { id: 107, type: "heart", pos: [-55, 0.8, 10] },
+      { id: 108, type: "nitro", pos: [-48, 0.8, -45] },
+    ],
+    []
+  );
 
-  // Track procedural collectibles across 2,300 meters
-  const collectibles: TrackCollectible[] = useMemo(() => {
-    const list: TrackCollectible[] = [];
-    for (let d = 80; d < 2280; d += 65) {
-      const type = d % 130 === 0 ? "star" : d % 195 === 0 ? "cupcake" : "heart";
-      const xOffset = Math.sin(d * 0.1) * 4.2;
-      const points = type === "star" ? 250 : type === "cupcake" ? 150 : 100;
-      list.push({ id: d, type, distanceM: d, xOffset, points });
-    }
-    return list;
-  }, []);
+  // Obstacles placed along the chicane and corners
+  const obstacles: CircuitObstacle[] = useMemo(
+    () => [
+      { id: 201, type: "cone", pos: [45, 0, -50], label: "OVERTHINKING HAZARD" },
+      { id: 202, type: "curfew", pos: [56, 0, -5], label: "HOSTEL CURFEW 9PM" },
+      { id: 203, type: "oilslick", pos: [48, 0, 35], label: "OIL SLICK" },
+      { id: 204, type: "distance", pos: [15, 0, 70], label: "1,540 KM DISTANCE GATE" },
+      { id: 205, type: "curfew", pos: [-35, 0, 65], label: "CURFEW GATE" },
+      { id: 206, type: "oilslick", pos: [-52, 0, 30], label: "OIL SLICK" },
+      { id: 207, type: "cone", pos: [-54, 0, -10], label: "OVERTHINKING CONES" },
+      { id: 208, type: "distance", pos: [-35, 0, -60], label: "1,540 KM DISTANCE GATE" },
+    ],
+    []
+  );
 
-  // Main Vehicle Physics and Dynamic Follow-Camera Loop
+  // Main Vehicle Physics and Lap Detection Loop
   useFrame((_, delta) => {
-    // 1. Process inputs
+    // Lap Timer
+    if (!hasWonGrandPrix) {
+      setLapTime((t) => t + delta);
+    }
+
+    // 1. Inputs
     let throttle = 0;
-    let steer = 0;
+    let targetSteer = 0;
 
     if (keys.current["w"] || keys.current["arrowup"]) throttle += 1;
-    if (keys.current["s"] || keys.current["arrowdown"]) throttle -= 0.8;
-    if (keys.current["a"] || keys.current["arrowleft"]) steer += 1;
-    if (keys.current["d"] || keys.current["arrowright"]) steer -= 1;
+    if (keys.current["s"] || keys.current["arrowdown"]) throttle -= 0.85;
+    if (keys.current["a"] || keys.current["arrowleft"]) targetSteer += 1;
+    if (keys.current["d"] || keys.current["arrowright"]) targetSteer -= 1;
 
-    throttleInput.current = throttle;
-    steerInput.current = steer;
+    // Smooth steering interpolation
+    carSteer.current = THREE.MathUtils.lerp(carSteer.current, targetSteer, delta * 12);
 
-    // 2. Compute Acceleration & Top Speed
-    const topSpeed = isNitroActive ? 42.0 : 28.0;
-    const accelRate = isNitroActive ? 32.0 : 18.0;
-    const friction = 7.0;
+    // 2. Acceleration Dynamics
+    const maxForwardSpeed = isNitroActive ? 62.0 : 42.0;
+    const accelRate = isNitroActive ? 40.0 : 22.0;
+    const brakeRate = 28.0;
+    const friction = 8.0;
 
     if (throttle > 0) {
-      currentSpeed.current = Math.min(topSpeed, currentSpeed.current + accelRate * delta);
+      carSpeed.current = Math.min(maxForwardSpeed, carSpeed.current + accelRate * delta);
     } else if (throttle < 0) {
-      currentSpeed.current = Math.max(-10.0, currentSpeed.current - accelRate * delta);
+      carSpeed.current = Math.max(-14.0, carSpeed.current - brakeRate * delta);
     } else {
-      // Natural rolling friction deceleration
-      if (currentSpeed.current > 0) {
-        currentSpeed.current = Math.max(0, currentSpeed.current - friction * delta);
-      } else if (currentSpeed.current < 0) {
-        currentSpeed.current = Math.min(0, currentSpeed.current + friction * delta);
+      // Natural rolling resistance
+      if (carSpeed.current > 0) {
+        carSpeed.current = Math.max(0, carSpeed.current - friction * delta);
+      } else if (carSpeed.current < 0) {
+        carSpeed.current = Math.min(0, carSpeed.current + friction * delta);
       }
     }
 
-    // 3. Steering and Turning Dynamics
-    if (Math.abs(currentSpeed.current) > 0.5) {
-      const steerSpeed = 1.6;
-      carYaw.current += steer * steerSpeed * (currentSpeed.current / topSpeed) * delta;
+    // 3. Angular Turning Dynamics (with realistic drift / slip angle)
+    if (Math.abs(carSpeed.current) > 0.5) {
+      const turnAgility = 1.85;
+      const turnRate = carSteer.current * turnAgility * (carSpeed.current / maxForwardSpeed);
+      carYaw.current += turnRate * delta;
+
+      // Calculate lateral slip
+      slipAngle.current = THREE.MathUtils.lerp(
+        slipAngle.current,
+        -carSteer.current * 0.18 * (carSpeed.current / maxForwardSpeed),
+        delta * 6
+      );
+    } else {
+      slipAngle.current = 0;
     }
 
-    // 4. Update Position in 3D Arena
-    const moveX = Math.sin(carYaw.current) * currentSpeed.current * delta;
-    const moveZ = Math.cos(carYaw.current) * currentSpeed.current * delta;
+    // 4. Update Position
+    const moveHeading = carYaw.current + slipAngle.current;
+    carPos.current.x += Math.sin(moveHeading) * carSpeed.current * delta;
+    carPos.current.z += Math.cos(moveHeading) * carSpeed.current * delta;
 
-    carPos.current.x += moveX;
-    carPos.current.z += moveZ;
+    // Outer Stadium Boundaries (Massive Arena 130m x 130m)
+    carPos.current.x = Math.max(-85.0, Math.min(85.0, carPos.current.x));
+    carPos.current.z = Math.max(-95.0, Math.min(95.0, carPos.current.z));
 
-    // Keep car inside stadium arena bounds (oval boundary)
-    carPos.current.x = Math.max(-14.5, Math.min(14.5, carPos.current.x));
-    carPos.current.z = Math.max(-48.0, Math.min(48.0, carPos.current.z));
-
-    // Update car visual position & rotation
+    // Update Car Mesh
     if (carRef.current) {
       carRef.current.position.set(carPos.current.x, 0, carPos.current.z);
       carRef.current.rotation.y = carYaw.current;
-      // Slight bank roll into steering turns
-      carRef.current.rotation.z = -steer * 0.08 * (currentSpeed.current / topSpeed);
+      // Body roll into corners and pitch on acceleration/braking
+      carRef.current.rotation.z = -carSteer.current * 0.08 * (carSpeed.current / maxForwardSpeed);
+      carRef.current.rotation.x = (throttle > 0 ? -0.02 : throttle < 0 ? 0.04 : 0);
     }
 
-    // 5. Update Total Race Distance Progress
-    if (currentSpeed.current > 0) {
-      const newDistance = distanceTraveled + currentSpeed.current * delta * 4;
-      setDistanceTraveled(newDistance);
-      setSpeed(Math.round(currentSpeed.current * 3.6)); // km/h
+    setSpeedKmh(Math.round(Math.abs(carSpeed.current) * 3.6));
 
-      // Check collectibles collision
-      collectibles.forEach((item) => {
-        if (!collectedIds.current.has(item.id)) {
-          if (Math.abs(newDistance - item.distanceM) < 8.0 && Math.abs(carPos.current.x - item.xOffset) < 1.8) {
-            collectedIds.current.add(item.id);
-            setScore((s) => s + item.points);
-            soundEngine.playTargetPop();
-          }
+    // 5. Checkpoint & Lap Detection
+    const targetWp = CIRCUIT_CHECKPOINTS[currentCheckpoint];
+    if (targetWp) {
+      const dx = carPos.current.x - targetWp.pos[0];
+      const dz = carPos.current.z - targetWp.pos[1];
+      const dist = Math.hypot(dx, dz);
+
+      if (dist < targetWp.radius) {
+        // Advance checkpoint
+        soundEngine.playTapeClick();
+        setScore((s) => s + 200);
+        setHudNotice(`CHECKPOINT: ${targetWp.name} REACHED!`);
+        setTimeout(() => setHudNotice(null), 1800);
+
+        if (currentCheckpoint === CIRCUIT_CHECKPOINTS.length - 1) {
+          // Ready for Start/Finish line
+          setCurrentCheckpoint(0);
+        } else if (currentCheckpoint === 0) {
+          // LAP COMPLETED! WINNER!
+          setHasWonGrandPrix(true);
+          soundEngine.playCrowdCheer();
+          soundEngine.playHappyBirthdayMelody();
+          setBestLapTime(lapTime);
+          setHudNotice("🏁 LAP COMPLETE! ANSHIKA WINS THE 23RD BDAY GRAND PRIX!");
+        } else {
+          setCurrentCheckpoint((c) => c + 1);
         }
-      });
-
-      // Check obstacles collision
-      obstacles.forEach((obs) => {
-        if (!bumpedObstacleIds.current.has(obs.id)) {
-          if (Math.abs(newDistance - obs.distanceM) < 6.0 && Math.abs(carPos.current.x - obs.xOffset) < 2.0) {
-            bumpedObstacleIds.current.add(obs.id);
-            currentSpeed.current *= 0.45; // Slow down penalty
-            soundEngine.playTapeClick();
-            setHitWarning(`AVOIDED: ${obs.label}!`);
-            setTimeout(() => setHitWarning(null), 1800);
-          }
-        }
-      });
-
-      // Check 2,300m Finish Line
-      if (newDistance >= 2300 && !hasFinishedRace) {
-        setHasFinishedRace(true);
-        soundEngine.playCrowdCheer();
-        soundEngine.playHappyBirthdayMelody();
       }
     }
 
-    // 6. Smooth Third-Person Chase Camera Follow
-    const camDistance = 6.8 + (currentSpeed.current / topSpeed) * 1.5;
-    const camHeight = 3.0;
+    // 6. Power-Up Collisions
+    powerUps.forEach((item) => {
+      if (!collectedPowerupIds.current.has(item.id)) {
+        const dx = carPos.current.x - item.pos[0];
+        const dz = carPos.current.z - item.pos[2];
+        if (Math.hypot(dx, dz) < 3.2) {
+          collectedPowerupIds.current.add(item.id);
+          soundEngine.playTargetPop();
+
+          if (item.type === "nitro") {
+            setNitroCount((n) => Math.min(n + 1, 5));
+            setScore((s) => s + 150);
+            setHudNotice("⚡ NITRO BOOST REFILLED!");
+          } else if (item.type === "shield") {
+            setIsShieldActive(true);
+            setScore((s) => s + 250);
+            setHudNotice("🛡️ LOVE SHIELD ACTIVATED!");
+            setTimeout(() => setIsShieldActive(false), 6000);
+          } else if (item.type === "star") {
+            setScore((s) => s + 500);
+            setHudNotice("⭐ 11:11 LUCKY STAR COLLECTED! +500 PTS");
+          } else if (item.type === "heart") {
+            setScore((s) => s + 300);
+            setHudNotice("💖 HEART POWERUP! +300 PTS");
+          }
+          setTimeout(() => setHudNotice(null), 2000);
+        }
+      }
+    });
+
+    // 7. Obstacle Collisions
+    obstacles.forEach((obs) => {
+      if (!triggeredObstacleIds.current.has(obs.id)) {
+        const dx = carPos.current.x - obs.pos[0];
+        const dz = carPos.current.z - obs.pos[2];
+        if (Math.hypot(dx, dz) < 3.0) {
+          triggeredObstacleIds.current.add(obs.id);
+
+          if (isShieldActive) {
+            // Smash through with shield
+            soundEngine.playTargetPop();
+            setScore((s) => s + 200);
+            setHudNotice(`🛡️ SHIELD SMASHED THROUGH ${obs.label}!`);
+          } else {
+            // Obstacle penalty
+            soundEngine.playTapeClick();
+            if (obs.type === "oilslick") {
+              slipAngle.current = (Math.random() - 0.5) * 0.8;
+              carSpeed.current *= 0.6;
+              setHudNotice("⚠️ OIL SLICK SLIP!");
+            } else {
+              carSpeed.current *= 0.4;
+              setHudNotice(`⚠️ HIT ${obs.label}! SPEED REDUCED`);
+            }
+          }
+          setTimeout(() => setHudNotice(null), 2000);
+          // Reset obstacle after 8 seconds
+          setTimeout(() => triggeredObstacleIds.current.delete(obs.id), 8000);
+        }
+      }
+    });
+
+    // 8. Dynamic Cinema Chase Camera Follow
+    const camDistance = 8.5 + (Math.abs(carSpeed.current) / maxForwardSpeed) * 3.5;
+    const camHeight = 3.6 + (Math.abs(carSpeed.current) / maxForwardSpeed) * 0.8;
 
     const targetCamX = carPos.current.x - Math.sin(carYaw.current) * camDistance;
     const targetCamY = carPos.current.y + camHeight;
     const targetCamZ = carPos.current.z - Math.cos(carYaw.current) * camDistance;
 
-    camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.12);
+    camera.position.lerp(new THREE.Vector3(targetCamX, targetCamY, targetCamZ), 0.14);
     camera.lookAt(
-      carPos.current.x + Math.sin(carYaw.current) * 4.0,
+      carPos.current.x + Math.sin(carYaw.current) * 6.0,
       carPos.current.y + 1.2,
-      carPos.current.z + Math.cos(carYaw.current) * 4.0
+      carPos.current.z + Math.cos(carYaw.current) * 6.0
     );
   });
 
   return (
     <group>
-      {/* ── Stadium Ambient & Track Lighting ── */}
-      <ambientLight intensity={0.7} color="#fef3c7" />
-      <directionalLight position={[0, 30, 0]} intensity={1.5} color="#fffbeb" />
+      {/* ── Stadium Lighting ── */}
+      <ambientLight intensity={0.8} color="#fef08a" />
+      <directionalLight position={[0, 45, 0]} intensity={1.8} color="#fffbeb" castShadow />
 
-      {/* 4 Corner High-Mast Floodlight Towers */}
-      <FloodlightTower position={[-18, 0, -50]} />
-      <FloodlightTower position={[18, 0, -50]} />
-      <FloodlightTower position={[-18, 0, 50]} />
-      <FloodlightTower position={[18, 0, 50]} />
+      {/* 8 Giant High-Mast Floodlight Towers */}
+      <HighMastTower position={[-80, 0, -90]} />
+      <HighMastTower position={[80, 0, -90]} />
+      <HighMastTower position={[-80, 0, 90]} />
+      <HighMastTower position={[80, 0, 90]} />
+      <HighMastTower position={[-85, 0, 0]} />
+      <HighMastTower position={[85, 0, 0]} />
+      <HighMastTower position={[0, 0, -95]} />
+      <HighMastTower position={[0, 0, 95]} />
 
-      {/* ── Stadium Oval Asphalt Track & Infield ── */}
-      {/* Track Asphalt Surface */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 0]} receiveShadow>
-        <planeGeometry args={[36, 108]} />
-        <meshStandardMaterial color="#18181b" roughness={0.8} />
+      {/* ── Massive Stadium Ground (Infield & Outfield Grass) ── */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
+        <planeGeometry args={[260, 260]} />
+        <meshStandardMaterial color="#052e16" roughness={0.9} />
+      </mesh>
+
+      {/* ── Grand Prix Circuit Track (Continuous Asphalt Course Loop) ── */}
+      {/* 1. Main Start/Finish Straightaway (Z: -80 to 20, X: 0 to 20) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, -40]} receiveShadow>
+        <planeGeometry args={[18, 90]} />
+        <meshStandardMaterial color="#18181b" roughness={0.7} />
+      </mesh>
+      {/* 2. Turn 1 Sweeper East (Z: -20 to 50, X: 50) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[52, -0.01, 15]} receiveShadow>
+        <planeGeometry args={[18, 90]} />
+        <meshStandardMaterial color="#18181b" roughness={0.7} />
+      </mesh>
+      {/* 3. North Hairpin Curve (Z: 68, X: -20 to 50) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.01, 68]} receiveShadow>
+        <planeGeometry args={[110, 18]} />
+        <meshStandardMaterial color="#18181b" roughness={0.7} />
+      </mesh>
+      {/* 4. West Back Straight & Chicane (Z: 20 to -60, X: -50) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-50, -0.01, 0]} receiveShadow>
+        <planeGeometry args={[18, 110]} />
+        <meshStandardMaterial color="#18181b" roughness={0.7} />
+      </mesh>
+      {/* 5. South Sweeper returning to Start Line (Z: -70, X: -50 to 0) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-25, -0.01, -70]} receiveShadow>
+        <planeGeometry args={[65, 18]} />
+        <meshStandardMaterial color="#18181b" roughness={0.7} />
       </mesh>
 
       {/* Track Center Line Markings */}
-      {[-40, -25, -10, 5, 20, 35].map((z) => (
+      {[-80, -60, -40, -20, 0, 20].map((z) => (
         <mesh key={z} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.01, z]}>
-          <planeGeometry args={[0.35, 6]} />
+          <planeGeometry args={[0.4, 6]} />
           <meshBasicMaterial color="#fef08a" />
         </mesh>
       ))}
 
-      {/* Track Apex Curbs (Red and White alternating curb stones) */}
-      {[-15.2, 15.2].map((x) =>
-        [-45, -30, -15, 0, 15, 30, 45].map((z, i) => (
-          <mesh key={`${x}-${z}`} position={[x, 0.08, z]}>
-            <boxGeometry args={[0.8, 0.16, 12]} />
+      {/* Red & White Apex Rumble Curbs on Corners */}
+      {[-1, 1].map((side) =>
+        [-80, -40, 0, 40, 60].map((z, idx) => (
+          <mesh key={`${side}-${z}`} position={[side * 9.2, 0.08, z]}>
+            <boxGeometry args={[0.8, 0.16, 10]} />
             <meshStandardMaterial
-              color={i % 2 === 0 ? "#ef4444" : "#ffffff"}
-              roughness={0.5}
+              color={idx % 2 === 0 ? "#ef4444" : "#ffffff"}
+              roughness={0.4}
             />
           </mesh>
         ))
       )}
 
-      {/* ── Stadium Bleachers with Cheering Fans & Banners ── */}
-      {/* Left Grandstand */}
-      <StadiumGrandstand
-        position={[-18, 0, 0]}
-        rotation={[0, Math.PI / 2, 0]}
-        bannerText="★ GO QUEEN ANSHIKA! • HAPPY 23RD BIRTHDAY ★"
-      />
-      {/* Right Grandstand */}
-      <StadiumGrandstand
-        position={[18, 0, 0]}
-        rotation={[0, -Math.PI / 2, 0]}
-        bannerText="★ SLAYYY ANSHIKA! • 1,540 KM CAN'T STOP TEAM ARNAV ★"
-      />
-      {/* Back Grandstand */}
-      <StadiumGrandstand
-        position={[0, 0, -52]}
-        rotation={[0, 0, 0]}
-        bannerText="★ 2,300 METERS OF LOVE & MEMORIES ★"
-      />
-
-      {/* ── Giant Stadium Jumbotrons with Anshika's Authentic Videos & Photos ── */}
-      {/* Jumbotron 1: Passenger Princess Video */}
-      <group position={[-16.8, 5.5, -20]} rotation={[0, Math.PI / 2, 0]}>
-        <mesh>
-          <boxGeometry args={[9.4, 5.8, 0.3]} />
-          <meshStandardMaterial color="#09090b" roughness={0.2} metalness={0.8} />
+      {/* ── Start / Finish Line Overhead Gantry & Flashing Lights ── */}
+      <group position={[0, 0, -70]}>
+        {/* Support Gantry Pillars */}
+        <mesh position={[-10.5, 5, 0]}>
+          <cylinderGeometry args={[0.4, 0.5, 10, 12]} />
+          <meshStandardMaterial color="#f59e0b" metalness={0.8} />
         </mesh>
-        <ArchivalMediaMesh
-          photoUrl={getPhotoUrl("anshika_on_our_last_anniversary.jpeg")}
-          videoUrl={getVideoUrl("her_being_a_passenger_princess.mp4")}
-          width={8.8}
-          height={5.2}
-          title="PASSENGER PRINCESS // LIVE STADIUM FEED"
-        />
-      </group>
-
-      {/* Jumbotron 2: Slaying Diva Video */}
-      <group position={[16.8, 5.5, -20]} rotation={[0, -Math.PI / 2, 0]}>
-        <mesh>
-          <boxGeometry args={[9.4, 5.8, 0.3]} />
-          <meshStandardMaterial color="#09090b" roughness={0.2} metalness={0.8} />
+        <mesh position={[10.5, 5, 0]}>
+          <cylinderGeometry args={[0.4, 0.5, 10, 12]} />
+          <meshStandardMaterial color="#f59e0b" metalness={0.8} />
         </mesh>
-        <ArchivalMediaMesh
-          photoUrl={getPhotoUrl("our_classic_heart_shaped_photo.jpeg")}
-          videoUrl={getVideoUrl(
-            "her_looking_like_a_diva_while_air_distorts_her_hair_and_she_fixes_them_with_her_hands.mp4"
-          )}
-          width={8.8}
-          height={5.2}
-          title="DIVA ON THE TRACK // CHEERING YOU ON"
-        />
-      </group>
-
-      {/* Jumbotron 3: Car Video with Arnav & Brother */}
-      <group position={[-16.8, 5.5, 20]} rotation={[0, Math.PI / 2, 0]}>
-        <mesh>
-          <boxGeometry args={[9.4, 5.8, 0.3]} />
-          <meshStandardMaterial color="#09090b" roughness={0.2} metalness={0.8} />
-        </mesh>
-        <ArchivalMediaMesh
-          photoUrl={getPhotoUrl("us looking hot her hotter.jpeg")}
-          videoUrl={getVideoUrl("her_arnav_and_her_big_brother_in_a_car.mp4")}
-          width={8.8}
-          height={5.2}
-          title="ROAD TRIP MEMORY // BIG BROTHER & ARNAV"
-        />
-      </group>
-
-      {/* Jumbotron 4: Mocha Cafe Slay Video */}
-      <group position={[16.8, 5.5, 20]} rotation={[0, -Math.PI / 2, 0]}>
-        <mesh>
-          <boxGeometry args={[9.4, 5.8, 0.3]} />
-          <meshStandardMaterial color="#09090b" roughness={0.2} metalness={0.8} />
-        </mesh>
-        <ArchivalMediaMesh
-          photoUrl={getPhotoUrl("our photo in our school afterparty.jpeg")}
-          videoUrl={getVideoUrl("her_slaying_in_her_look_in_mocha_cafe.mp4")}
-          width={8.8}
-          height={5.2}
-          title="MOCHA CAFÉ SLAY // #1 CHEERLEADER"
-        />
-      </group>
-
-      {/* ── 3D Start / Finish Line Overhead Archway ── */}
-      <group position={[0, 0, 0]}>
-        {/* Left Gantry Pillar */}
-        <mesh position={[-15.2, 4.5, 0]}>
-          <cylinderGeometry args={[0.35, 0.45, 9, 12]} />
-          <meshStandardMaterial color="#f59e0b" metalness={0.8} roughness={0.3} />
-        </mesh>
-        {/* Right Gantry Pillar */}
-        <mesh position={[15.2, 4.5, 0]}>
-          <cylinderGeometry args={[0.35, 0.45, 9, 12]} />
-          <meshStandardMaterial color="#f59e0b" metalness={0.8} roughness={0.3} />
-        </mesh>
-        {/* Overhead Gantry Banner */}
-        <mesh position={[0, 8.2, 0]}>
-          <boxGeometry args={[31, 1.4, 0.4]} />
-          <meshStandardMaterial color="#09090b" metalness={0.6} />
+        {/* Overhead Gantry Signboard */}
+        <mesh position={[0, 9.2, 0]}>
+          <boxGeometry args={[22, 1.8, 0.5]} />
+          <meshStandardMaterial color="#09090b" metalness={0.8} />
         </mesh>
         <Text
-          position={[0, 8.2, 0.25]}
-          fontSize={0.6}
+          position={[0, 9.2, 0.3]}
+          fontSize={0.75}
           color="#fde047"
           fontWeight={900}
           letterSpacing={0.15}
@@ -671,108 +785,242 @@ export default function CarRaceRoom() {
         >
           🏁 ANSHIKA 23RD BIRTHDAY GRAND PRIX 🏁
         </Text>
+        {/* Checkered Finish Line Pattern on Road */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.02, 0]}>
+          <planeGeometry args={[18, 3.2]} />
+          <meshBasicMaterial color="#ffffff" />
+        </mesh>
       </group>
 
-      {/* ── The Drivable Vehicle ── */}
-      <AnshikaMidnightRacer
-        carRef={carRef}
-        speed={speed}
-        steerAngle={steerInput.current}
+      {/* ── Mega Stadium Bleachers & Cheering Crowds ── */}
+      {/* North Grandstand */}
+      <MegaStadiumGrandstand
+        position={[0, 0, 88]}
+        rotation={[0, Math.PI, 0]}
+        bannerText="★ GO QUEEN ANSHIKA! • 23RD BIRTHDAY GRAND PRIX CHAMPION ★"
+        width={90}
+      />
+      {/* South Grandstand */}
+      <MegaStadiumGrandstand
+        position={[0, 0, -88]}
+        rotation={[0, 0, 0]}
+        bannerText="★ SLAYYY ANSHIKA! • 1,540 KM CAN'T STOP TEAM ARNAV ★"
+        width={90}
+      />
+      {/* East Grandstand */}
+      <MegaStadiumGrandstand
+        position={[75, 0, 0]}
+        rotation={[0, -Math.PI / 2, 0]}
+        bannerText="★ BEAUTIFUL • MASTERMIND • MAIN CHARACTER ★"
+        width={100}
+      />
+      {/* West Grandstand */}
+      <MegaStadiumGrandstand
+        position={[-75, 0, 0]}
+        rotation={[0, Math.PI / 2, 0]}
+        bannerText="★ FROM KULHAD78 TO FOREVER • SPEED QUEEN ★"
+        width={100}
       />
 
-      {/* ── 3D Obstacles Rendered along Current Track View ── */}
-      {obstacles.map((obs) => {
-        // Render obstacles within relative proximity to car distance
-        const relativeDist = obs.distanceM - distanceTraveled;
-        if (relativeDist < -40 || relativeDist > 160) return null;
-        const zPos = carPos.current.z + (relativeDist / 2300) * 80;
+      {/* ── Giant Trackside Jumbotrons Playing Anshika's Real Looping Videos ── */}
+      {/* Jumbotron 1: Passenger Princess Video (North East) */}
+      <group position={[68, 8, 45]} rotation={[0, -Math.PI / 2.3, 0]}>
+        <mesh>
+          <boxGeometry args={[14, 8.4, 0.4]} />
+          <meshStandardMaterial color="#09090b" roughness={0.2} metalness={0.8} />
+        </mesh>
+        <ArchivalMediaMesh
+          photoUrl={getPhotoUrl("anshika_on_our_last_anniversary.jpeg")}
+          videoUrl={getVideoUrl("her_being_a_passenger_princess.mp4")}
+          width={13.2}
+          height={7.6}
+          title="LIVE FEED // PASSENGER PRINCESS FOREVER"
+        />
+      </group>
 
+      {/* Jumbotron 2: Slaying Diva Video (North West) */}
+      <group position={[-68, 8, 45]} rotation={[0, Math.PI / 2.3, 0]}>
+        <mesh>
+          <boxGeometry args={[14, 8.4, 0.4]} />
+          <meshStandardMaterial color="#09090b" roughness={0.2} metalness={0.8} />
+        </mesh>
+        <ArchivalMediaMesh
+          photoUrl={getPhotoUrl("our_classic_heart_shaped_photo.jpeg")}
+          videoUrl={getVideoUrl(
+            "her_looking_like_a_diva_while_air_distorts_her_hair_and_she_fixes_them_with_her_hands.mp4"
+          )}
+          width={13.2}
+          height={7.6}
+          title="LIVE FEED // DIVA ON THE TRACK"
+        />
+      </group>
+
+      {/* Jumbotron 3: Road Trip with Arnav & Big Brother (South East) */}
+      <group position={[68, 8, -45]} rotation={[0, -Math.PI / 1.7, 0]}>
+        <mesh>
+          <boxGeometry args={[14, 8.4, 0.4]} />
+          <meshStandardMaterial color="#09090b" roughness={0.2} metalness={0.8} />
+        </mesh>
+        <ArchivalMediaMesh
+          photoUrl={getPhotoUrl("us looking hot her hotter.jpeg")}
+          videoUrl={getVideoUrl("her_arnav_and_her_big_brother_in_a_car.mp4")}
+          width={13.2}
+          height={7.6}
+          title="ROAD TRIP ARCHIVE // BROTHER & ARNAV"
+        />
+      </group>
+
+      {/* Jumbotron 4: Slaying in Mocha Cafe (South West) */}
+      <group position={[-68, 8, -45]} rotation={[0, Math.PI / 1.7, 0]}>
+        <mesh>
+          <boxGeometry args={[14, 8.4, 0.4]} />
+          <meshStandardMaterial color="#09090b" roughness={0.2} metalness={0.8} />
+        </mesh>
+        <ArchivalMediaMesh
+          photoUrl={getPhotoUrl("our photo in our school afterparty.jpeg")}
+          videoUrl={getVideoUrl("her_slaying_in_her_look_in_mocha_cafe.mp4")}
+          width={13.2}
+          height={7.6}
+          title="MOCHA CAFÉ // NUMBER 1 IN OUR HEARTS"
+        />
+      </group>
+
+      {/* ── The 3D Drivable Hypercar ── */}
+      <AnshikaHypercar
+        carRef={carRef}
+        speed={carSpeed.current}
+        steerAngle={carSteer.current}
+        isShieldActive={isShieldActive}
+        isNitroActive={isNitroActive}
+      />
+
+      {/* ── 3D Power-Up Pickups Along Track ── */}
+      {powerUps.map((item) => {
+        if (collectedPowerupIds.current.has(item.id)) return null;
         return (
-          <group key={obs.id} position={[obs.xOffset, 0, zPos]}>
-            {obs.type === "curfew" && (
-              <group>
-                <mesh position={[0, 0.6, 0]}>
-                  <boxGeometry args={[2.8, 1.2, 0.3]} />
-                  <meshStandardMaterial color="#dc2626" roughness={0.5} />
-                </mesh>
-                <Text
-                  position={[0, 0.6, 0.18]}
-                  fontSize={0.2}
-                  color="#ffffff"
-                  fontWeight={900}
-                  anchorX="center"
-                >
-                  CURFEW 9PM
-                </Text>
-              </group>
-            )}
-            {obs.type === "distance" && (
-              <group>
-                <mesh position={[0, 1.4, 0]}>
-                  <boxGeometry args={[3.2, 0.6, 0.2]} />
-                  <meshBasicMaterial color="#f59e0b" />
-                </mesh>
-                <Text
-                  position={[0, 1.4, 0.12]}
-                  fontSize={0.18}
-                  color="#000000"
-                  fontWeight={900}
-                  anchorX="center"
-                >
-                  1,540 KM GATE
-                </Text>
-              </group>
-            )}
-            {obs.type === "cone" && (
-              <mesh position={[0, 0.45, 0]}>
-                <coneGeometry args={[0.35, 0.9, 12]} />
-                <meshStandardMaterial color="#f97316" roughness={0.3} />
-              </mesh>
-            )}
-          </group>
-        );
-      })}
-
-      {/* ── 3D Floating Collectibles along Current Track View ── */}
-      {collectibles.map((col) => {
-        if (collectedIds.current.has(col.id)) return null;
-        const relativeDist = col.distanceM - distanceTraveled;
-        if (relativeDist < -30 || relativeDist > 140) return null;
-        const zPos = carPos.current.z + (relativeDist / 2300) * 80;
-
-        return (
-          <group key={col.id} position={[col.xOffset, 1.2, zPos]}>
-            <Float speed={3} rotationIntensity={0.5} floatIntensity={0.8}>
-              {col.type === "heart" && (
-                <mesh>
-                  <sphereGeometry args={[0.35, 12, 12]} />
-                  <meshBasicMaterial color="#f43f5e" />
-                </mesh>
+          <group key={item.id} position={item.pos}>
+            <Float speed={3.5} rotationIntensity={0.6} floatIntensity={0.8}>
+              {item.type === "nitro" && (
+                <group>
+                  <mesh>
+                    <octahedronGeometry args={[0.7]} />
+                    <meshBasicMaterial color="#06b6d4" />
+                  </mesh>
+                  <pointLight color="#06b6d4" intensity={2.0} distance={5} />
+                </group>
               )}
-              {col.type === "star" && (
-                <mesh>
-                  <octahedronGeometry args={[0.4]} />
-                  <meshBasicMaterial color="#facc15" />
-                </mesh>
+              {item.type === "shield" && (
+                <group>
+                  <mesh>
+                    <sphereGeometry args={[0.75, 16, 16]} />
+                    <meshBasicMaterial color="#38bdf8" wireframe />
+                  </mesh>
+                  <pointLight color="#38bdf8" intensity={2.0} distance={5} />
+                </group>
               )}
-              {col.type === "cupcake" && (
-                <mesh>
-                  <cylinderGeometry args={[0.3, 0.2, 0.4, 12]} />
-                  <meshBasicMaterial color="#38bdf8" />
-                </mesh>
+              {item.type === "star" && (
+                <group>
+                  <mesh>
+                    <octahedronGeometry args={[0.8]} />
+                    <meshBasicMaterial color="#facc15" />
+                  </mesh>
+                  <pointLight color="#facc15" intensity={2.5} distance={6} />
+                </group>
+              )}
+              {item.type === "heart" && (
+                <group>
+                  <mesh>
+                    <sphereGeometry args={[0.7, 16, 16]} />
+                    <meshBasicMaterial color="#f43f5e" />
+                  </mesh>
+                  <pointLight color="#f43f5e" intensity={2.0} distance={5} />
+                </group>
               )}
             </Float>
           </group>
         );
       })}
 
-      {/* ── Grand Prix Victory Celebration Banner ── */}
-      {hasFinishedRace && (
-        <group position={[0, 6.5, carPos.current.z + 12]}>
-          <Float speed={2} rotationIntensity={0.1} floatIntensity={0.4}>
+      {/* ── 3D Obstacles Along Track ── */}
+      {obstacles.map((obs) => {
+        if (triggeredObstacleIds.current.has(obs.id)) return null;
+        return (
+          <group key={obs.id} position={obs.pos}>
+            {obs.type === "curfew" && (
+              <group>
+                <mesh position={[0, 1.0, 0]}>
+                  <boxGeometry args={[4.2, 1.8, 0.4]} />
+                  <meshStandardMaterial color="#dc2626" roughness={0.4} />
+                </mesh>
+                <Text
+                  position={[0, 1.0, 0.25]}
+                  fontSize={0.35}
+                  color="#ffffff"
+                  fontWeight={900}
+                  anchorX="center"
+                >
+                  HOSTEL CURFEW 9PM
+                </Text>
+              </group>
+            )}
+            {obs.type === "distance" && (
+              <group>
+                <mesh position={[0, 1.8, 0]}>
+                  <boxGeometry args={[5.5, 0.9, 0.35]} />
+                  <meshBasicMaterial color="#f59e0b" />
+                </mesh>
+                <Text
+                  position={[0, 1.8, 0.2]}
+                  fontSize={0.3}
+                  color="#000000"
+                  fontWeight={900}
+                  anchorX="center"
+                >
+                  1,540 KM DISTANCE GATE
+                </Text>
+              </group>
+            )}
+            {obs.type === "cone" && (
+              <group position={[0, 0.6, 0]}>
+                <mesh>
+                  <coneGeometry args={[0.45, 1.2, 12]} />
+                  <meshStandardMaterial color="#f97316" roughness={0.3} />
+                </mesh>
+              </group>
+            )}
+            {obs.type === "oilslick" && (
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]}>
+                <circleGeometry args={[2.8, 16]} />
+                <meshBasicMaterial color="#0f172a" />
+              </mesh>
+            )}
+          </group>
+        );
+      })}
+
+      {/* ── Checkpoint Gate Visuals ── */}
+      {CIRCUIT_CHECKPOINTS.map((wp) => (
+        <group key={wp.index} position={[wp.pos[0], 0, wp.pos[1]]}>
+          {wp.index !== 0 && (
+            <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[wp.radius * 0.85, wp.radius, 32]} />
+              <meshBasicMaterial
+                color={currentCheckpoint === wp.index ? "#fde047" : "#38bdf8"}
+                transparent
+                opacity={0.45}
+              />
+            </mesh>
+          )}
+        </group>
+      ))}
+
+      {/* ── Victory Grand Prix Podium Celebration Banner ── */}
+      {hasWonGrandPrix && (
+        <group position={[0, 7.5, carPos.current.z + 14]}>
+          <Float speed={2} rotationIntensity={0.1} floatIntensity={0.5}>
             <Text
-              position={[0, 0.8, 0]}
-              fontSize={0.8}
+              position={[0, 1.2, 0]}
+              fontSize={1.1}
               color="#fde047"
               fontWeight={900}
               anchorX="center"
@@ -780,22 +1028,22 @@ export default function CarRaceRoom() {
               🏆 ANSHIKA WINS THE 23RD BDAY GRAND PRIX! 🏆
             </Text>
             <Text
-              position={[0, 0, 0]}
-              fontSize={0.35}
+              position={[0, 0.1, 0]}
+              fontSize={0.45}
               color="#38bdf8"
               fontWeight={700}
               anchorX="center"
             >
-              2,300 METERS COMPLETE • CLASSIFIED EVIDENCE RECORDED
+              LAP RECORDED: {lapTime.toFixed(2)}s • EVIDENCE CLUE UNLOCKED
             </Text>
           </Float>
         </group>
       )}
 
-      {/* ── Return Door leading back to Archive Hub ── */}
+      {/* ── Return Door back to Archive Hub ── */}
       <Door
-        position={[0, 1.6, 50]}
-        rotation={[0, Math.PI, 0]}
+        position={[0, 1.6, -85]}
+        rotation={[0, 0, 0]}
         label="RETURN TO ARCHIVE VAULT"
         targetRoom="HUB"
       />
