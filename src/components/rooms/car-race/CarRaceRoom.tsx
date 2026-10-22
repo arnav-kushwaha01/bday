@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Text, Float } from "@react-three/drei";
+import { Text, Float, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { Door } from "../RoomPrimitives";
 import { soundEngine } from "@/engine/audio/AudioManager";
@@ -426,9 +426,18 @@ interface CircuitObstacle {
   label: string;
 }
 
+export interface RaceEventPopup {
+  id: number;
+  icon: string;
+  title: string;
+  subtitle: string;
+  color: string;
+}
+
 export default function CarRaceRoom() {
   const { camera } = useThree();
   const carRef = useRef<THREE.Group>(null);
+  const carMarkerSvgRef = useRef<SVGGElement>(null);
 
   // Gameplay State
   const [speedKmh, setSpeedKmh] = useState<number>(0);
@@ -442,6 +451,18 @@ export default function CarRaceRoom() {
   const [isShieldActive, setIsShieldActive] = useState<boolean>(false);
   const [hasWonGrandPrix, setHasWonGrandPrix] = useState<boolean>(false);
   const [hudNotice, setHudNotice] = useState<string | null>(null);
+  const [racePopups, setRacePopups] = useState<RaceEventPopup[]>([]);
+
+  const triggerRacePopup = useCallback(
+    (icon: string, title: string, subtitle: string, color: string = "#facc15") => {
+      const id = Date.now() + Math.random();
+      setRacePopups((prev) => [...prev.slice(-2), { id, icon, title, subtitle, color }]);
+      setTimeout(() => {
+        setRacePopups((prev) => prev.filter((p) => p.id !== id));
+      }, 2800);
+    },
+    []
+  );
 
   // Dynamic Car Kinematics
   const carPos = useRef(new THREE.Vector3(0, 0, -68));
@@ -578,6 +599,17 @@ export default function CarRaceRoom() {
       carRef.current.rotation.x = (throttle > 0 ? -0.02 : throttle < 0 ? 0.04 : 0);
     }
 
+    // ── Update 2D SVG Mini-Map Radar Marker (Zero React Re-render Overhead) ──
+    if (carMarkerSvgRef.current) {
+      const mx = 90 + (carPos.current.x / 95) * 72;
+      const my = 90 + (carPos.current.z / 95) * 72;
+      const deg = (carYaw.current * 180) / Math.PI;
+      carMarkerSvgRef.current.setAttribute(
+        "transform",
+        `translate(${mx.toFixed(1)}, ${my.toFixed(1)}) rotate(${deg.toFixed(1)})`
+      );
+    }
+
     setSpeedKmh(Math.round(Math.abs(carSpeed.current) * 3.6));
 
     // 5. Checkpoint & Lap Detection
@@ -588,14 +620,12 @@ export default function CarRaceRoom() {
       const dist = Math.hypot(dx, dz);
 
       if (dist < targetWp.radius) {
-        // Advance checkpoint
         soundEngine.playTapeClick();
         setScore((s) => s + 200);
-        setHudNotice(`CHECKPOINT: ${targetWp.name} REACHED!`);
-        setTimeout(() => setHudNotice(null), 1800);
 
         if (currentCheckpoint === CIRCUIT_CHECKPOINTS.length - 1) {
           // Ready for Start/Finish line
+          triggerRacePopup("🏁", "FINAL CHICANE CLEARED!", "FLOOR IT! ENTERING HOME STRETCH!", "#38bdf8");
           setCurrentCheckpoint(0);
         } else if (currentCheckpoint === 0) {
           // LAP COMPLETED! WINNER!
@@ -603,8 +633,14 @@ export default function CarRaceRoom() {
           soundEngine.playCrowdCheer();
           soundEngine.playHappyBirthdayMelody();
           setBestLapTime(lapTime);
-          setHudNotice("🏁 LAP COMPLETE! ANSHIKA WINS THE 23RD BDAY GRAND PRIX!");
+          triggerRacePopup(
+            "🏆",
+            "GRAND PRIX CHAMPION!",
+            `ANSHIKA WINS! LAP TIME: ${lapTime.toFixed(2)}s • EVIDENCE CLUE UNLOCKED`,
+            "#fde047"
+          );
         } else {
+          triggerRacePopup("🚩", `CHECKPOINT: ${targetWp.name}`, `SECTOR SPLIT CLEAR • +200 PTS`, "#38bdf8");
           setCurrentCheckpoint((c) => c + 1);
         }
       }
@@ -622,20 +658,19 @@ export default function CarRaceRoom() {
           if (item.type === "nitro") {
             setNitroCount((n) => Math.min(n + 1, 5));
             setScore((s) => s + 150);
-            setHudNotice("⚡ NITRO BOOST REFILLED!");
+            triggerRacePopup("⚡", "NITRO BOOST REFILLED!", "PRESS [SPACE] TO ENGAGE +40 KM/H SPEED BURST", "#06b6d4");
           } else if (item.type === "shield") {
             setIsShieldActive(true);
             setScore((s) => s + 250);
-            setHudNotice("🛡️ LOVE SHIELD ACTIVATED!");
+            triggerRacePopup("🛡️", "LOVE SHIELD ONLINE!", "IMMUNITY TO TRACK HAZARDS & CURFEWS FOR 6s", "#38bdf8");
             setTimeout(() => setIsShieldActive(false), 6000);
           } else if (item.type === "star") {
             setScore((s) => s + 500);
-            setHudNotice("⭐ 11:11 LUCKY STAR COLLECTED! +500 PTS");
+            triggerRacePopup("⭐", "11:11 LUCKY STAR!", "+500 PTS • ANSHIKA WISH MULTIPLIER", "#facc15");
           } else if (item.type === "heart") {
             setScore((s) => s + 300);
-            setHudNotice("💖 HEART POWERUP! +300 PTS");
+            triggerRacePopup("💖", "HEART OVERDRIVE!", "+300 PTS • MAXIMUM TURBO ADRENALINE", "#f43f5e");
           }
-          setTimeout(() => setHudNotice(null), 2000);
         }
       }
     });
@@ -652,20 +687,19 @@ export default function CarRaceRoom() {
             // Smash through with shield
             soundEngine.playTargetPop();
             setScore((s) => s + 200);
-            setHudNotice(`🛡️ SHIELD SMASHED THROUGH ${obs.label}!`);
+            triggerRacePopup("🛡️", "SHIELD SMASH!", `BLOWN PAST ${obs.label} • +200 PTS BONUS`, "#4ade80");
           } else {
             // Obstacle penalty
             soundEngine.playTapeClick();
             if (obs.type === "oilslick") {
               slipAngle.current = (Math.random() - 0.5) * 0.8;
               carSpeed.current *= 0.6;
-              setHudNotice("⚠️ OIL SLICK SLIP!");
+              triggerRacePopup("⚠️", "OIL SLICK SPOTTED!", "TRACTION SLIP! COUNTERSTEER TO RECOVER", "#f97316");
             } else {
               carSpeed.current *= 0.4;
-              setHudNotice(`⚠️ HIT ${obs.label}! SPEED REDUCED`);
+              triggerRacePopup("⚠️", "HAZARD IMPACT!", `HIT ${obs.label} • SPEED DUCKED`, "#ef4444");
             }
           }
-          setTimeout(() => setHudNotice(null), 2000);
           // Reset obstacle after 8 seconds
           setTimeout(() => triggeredObstacleIds.current.delete(obs.id), 8000);
         }
@@ -1039,6 +1073,190 @@ export default function CarRaceRoom() {
           </Float>
         </group>
       )}
+
+      {/* ── Dynamic Race HUD & 2D Circuit Radar Mini-Map ── */}
+      <Html fullscreen style={{ pointerEvents: "none" }}>
+        {/* Floating Race Event Popups (Top Center) */}
+        <div
+          style={{
+            position: "absolute",
+            top: "4.5rem",
+            left: "50%",
+            transform: "translateX(-50%)",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: "0.5rem",
+            zIndex: 60,
+            pointerEvents: "none",
+          }}
+        >
+          {racePopups.map((popup) => (
+            <div
+              key={popup.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.85rem",
+                padding: "0.6rem 1.4rem",
+                background: "rgba(10, 10, 15, 0.88)",
+                border: `1.5px solid ${popup.color}`,
+                boxShadow: `0 8px 24px rgba(0,0,0,0.7), 0 0 16px ${popup.color}44`,
+                borderRadius: 8,
+                backdropFilter: "blur(8px)",
+                fontFamily: "var(--font-geist-mono), monospace",
+              }}
+            >
+              <span style={{ fontSize: "1.6rem" }}>{popup.icon}</span>
+              <div style={{ display: "flex", flexDirection: "column", textAlign: "left" }}>
+                <span
+                  style={{
+                    color: popup.color,
+                    fontWeight: 900,
+                    fontSize: "0.82rem",
+                    letterSpacing: "0.12em",
+                  }}
+                >
+                  {popup.title}
+                </span>
+                <span style={{ color: "#d4d4d8", fontSize: "0.62rem", letterSpacing: "0.06em" }}>
+                  {popup.subtitle}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Tactical Circuit Mini-Map Radar (Bottom Right) */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "1.2rem",
+            right: "1.2rem",
+            background: "rgba(9, 9, 15, 0.92)",
+            border: `1.5px solid ${THEME.evidence.primary}99`,
+            borderRadius: 8,
+            boxShadow: "0 12px 36px rgba(0,0,0,0.85), inset 0 0 12px rgba(250,204,21,0.06)",
+            backdropFilter: "blur(10px)",
+            padding: "0.65rem 0.8rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.35rem",
+            zIndex: 50,
+            fontFamily: "var(--font-geist-mono), monospace",
+            pointerEvents: "auto",
+          }}
+        >
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.55rem" }}>
+            <span style={{ color: THEME.evidence.primary, fontWeight: 800, letterSpacing: "0.15em" }}>
+              CIRCUIT RADAR // 260M
+            </span>
+            <span style={{ color: "#4ade80", fontSize: "0.5rem", fontWeight: 700 }}>● LIVE GPS</span>
+          </div>
+
+          {/* SVG Map Canvas */}
+          <svg width="180" height="180" viewBox="0 0 180 180" style={{ background: "#050508", borderRadius: 4 }}>
+            {/* Radar Grid Circles */}
+            <circle cx="90" cy="90" r="82" fill="none" stroke="#27272a" strokeWidth="1" strokeDasharray="3 3" />
+            <circle cx="90" cy="90" r="54" fill="none" stroke="#18181b" strokeWidth="1" />
+            <circle cx="90" cy="90" r="26" fill="none" stroke="#18181b" strokeWidth="1" />
+            <line x1="90" y1="8" x2="90" y2="172" stroke="#18181b" strokeWidth="1" />
+            <line x1="8" y1="90" x2="172" y2="90" stroke="#18181b" strokeWidth="1" />
+
+            {/* Circuit Track Path Loop */}
+            <path
+              d="M 90 35 L 133 74 L 117 137 L 54 133 L 50 70 Z"
+              fill="none"
+              stroke="#27272a"
+              strokeWidth="14"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+            <path
+              d="M 90 35 L 133 74 L 117 137 L 54 133 L 50 70 Z"
+              fill="none"
+              stroke="#38bdf8"
+              strokeWidth="2.5"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+              strokeOpacity="0.85"
+            />
+
+            {/* Checkpoints */}
+            {CIRCUIT_CHECKPOINTS.map((wp) => {
+              const cx = 90 + (wp.pos[0] / 95) * 72;
+              const cy = 90 + (wp.pos[1] / 95) * 72;
+              const isTarget = currentCheckpoint === wp.index;
+              return (
+                <g key={wp.index}>
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={isTarget ? 5.5 : 3.5}
+                    fill={isTarget ? "#fde047" : "#0284c7"}
+                    stroke={isTarget ? "#fff" : "#38bdf8"}
+                    strokeWidth="1.5"
+                  />
+                  <text
+                    x={cx}
+                    y={cy - 6}
+                    fontSize="7"
+                    fill={isTarget ? "#fde047" : "#94a3b8"}
+                    textAnchor="middle"
+                    fontWeight="800"
+                  >
+                    {wp.index === 0 ? "FINISH" : `CP${wp.index}`}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* Power-up Pickups */}
+            {powerUps.map((p) => {
+              if (collectedPowerupIds.current.has(p.id)) return null;
+              const px = 90 + (p.pos[0] / 95) * 72;
+              const py = 90 + (p.pos[2] / 95) * 72;
+              const col =
+                p.type === "nitro"
+                  ? "#06b6d4"
+                  : p.type === "shield"
+                  ? "#38bdf8"
+                  : p.type === "star"
+                  ? "#facc15"
+                  : "#f43f5e";
+              return <circle key={p.id} cx={px} cy={py} r="2.8" fill={col} />;
+            })}
+
+            {/* Obstacles */}
+            {obstacles.map((obs) => {
+              if (triggeredObstacleIds.current.has(obs.id)) return null;
+              const ox = 90 + (obs.pos[0] / 95) * 72;
+              const oy = 90 + (obs.pos[2] / 95) * 72;
+              return <rect key={obs.id} x={ox - 2} y={oy - 2} width="4" height="4" fill="#ef4444" />;
+            })}
+
+            {/* Real-time Player Car Marker */}
+            <g ref={carMarkerSvgRef} transform="translate(90, 35)">
+              <circle r="6" fill="#f43f5e" fillOpacity="0.35" />
+              <polygon points="0,-7 4,5 0,3 -4,5" fill="#f43f5e" stroke="#fff" strokeWidth="1" />
+            </g>
+          </svg>
+
+          {/* Telemetry Footer */}
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.52rem", color: "#a1a1aa" }}>
+            <span>
+              SPD: <strong style={{ color: "#fde047" }}>{speedKmh} KM/H</strong>
+            </span>
+            <span>
+              LAP: <strong style={{ color: "#38bdf8" }}>{lapTime.toFixed(1)}s</strong>
+            </span>
+            <span>
+              NITRO: <strong style={{ color: "#06b6d4" }}>{"⚡".repeat(nitroCount)}</strong>
+            </span>
+          </div>
+        </div>
+      </Html>
 
       {/* ── Return Door back to Archive Hub ── */}
       <Door

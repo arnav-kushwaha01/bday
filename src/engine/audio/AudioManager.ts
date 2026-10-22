@@ -74,6 +74,42 @@ export const LOVE_SONGS_PLAYLIST: LoveSongTrack[] = [
   },
 ];
 
+export interface CuteVoiceNote {
+  file: string;
+  subtitle: string;
+}
+
+export const ANSHIKA_VOICE_NOTES: CuteVoiceNote[] = [
+  {
+    file: "cutely_calling_me_dumbo.ogg",
+    subtitle: 'Anshika: "Dumboooo! 🥰"',
+  },
+  {
+    file: "so_adorable_while_calling_me_cute_and_telling_me_that_i_am_proud_of_my_cuteness.ogg",
+    subtitle: 'Anshika: "You know you are cute na? Bilkul proud of your cuteness! ✨"',
+  },
+  {
+    file: "telling_me_to_listen_the_above_voicenote_in_cutely_angrytone_because_i_missed_it.ogg",
+    subtitle: 'Anshika: "Upar wala voice note suno pehle! Miss kaise kiya?! 😤"',
+  },
+  {
+    file: "excited_about_me_coming_back_from_college_and_us_eating_mabchurian_rice.ogg",
+    subtitle: 'Anshika: "Yayyy! Arnav wapas aayega aur hum Manchurian Rice khayenge! 🍚"',
+  },
+  {
+    file: "being_the_cutest_over_arnav_going_to_college_far_that_she_says_thats_why_the_weather_got_bad.ogg",
+    subtitle: 'Anshika: "Tum college ja rahe ho na... isiliye mausam bhi udaas ho gaya! 🌧️"',
+  },
+  {
+    file: "telling_me_that_i_am_so_cute_to_like_every_text_of_her_whic_makes_her_happy_and_loved.ogg",
+    subtitle: 'Anshika: "Aww you like every single text... it makes me feel so loved! ❤️"',
+  },
+  {
+    file: "being_angry_and_telling_me_if_i_am_not_busy_studying_and_doing_spmething_else_then_i_am_in_trouble.ogg",
+    subtitle: 'Anshika: "Agar padhai chhod ke kuch aur kiya na... toh you are in big trouble! 📚"',
+  },
+];
+
 class AudioManager {
   private ctx: AudioContext | null = null;
   private isInitialized = false;
@@ -98,16 +134,22 @@ class AudioManager {
   private isPlaying = false;
   private isBirthdayMelodyPlaying = false;
 
-  // Synthesis loops & intervals
-  private synthInterval: number | null = null;
-  private synthStep = 0;
+  // Synthesis loops, oscillators, and timers
+  private activeTimers: Set<number> = new Set();
   private activeOscillators: OscillatorNode[] = [];
+  private activeBufferSources: Set<AudioBufferSourceNode> = new Set();
+
+  // Playback session token to prevent async overlapping tracks
+  private playbackSessionId = 0;
+  private activeMediaElements: Set<HTMLAudioElement> = new Set();
+  private customAudio: HTMLAudioElement | null = null;
+
+  // Short voice notes
+  private activeVoiceAudio: HTMLAudioElement | null = null;
+  private lastVoiceNoteTime = 0;
 
   // Footstep throttling
   private lastFootstepTime = 0;
-
-  // Custom audio element for file playback
-  private customAudio: HTMLAudioElement | null = null;
 
   // Listeners for UI updates
   private listeners: Set<() => void> = new Set();
@@ -131,12 +173,45 @@ class AudioManager {
     });
   }
 
+  private registerTimeout(fn: () => void, ms: number): number {
+    const id = window.setTimeout(() => {
+      this.activeTimers.delete(id);
+      fn();
+    }, ms);
+    this.activeTimers.add(id);
+    return id;
+  }
+
+  private registerInterval(fn: () => void, ms: number): number {
+    const id = window.setInterval(fn, ms);
+    this.activeTimers.add(id);
+    return id;
+  }
+
+  private clearAllTimers() {
+    this.activeTimers.forEach((id) => {
+      window.clearTimeout(id);
+      window.clearInterval(id);
+    });
+    this.activeTimers.clear();
+  }
+
+  private computeMusicVolume(): number {
+    if (this.isMuted) return 0;
+    const roomMultiplier = this.currentRoom === "FINAL" ? 0.02 : 1;
+    return Math.max(0, Math.min(1, roomMultiplier * this.masterVolume * this.musicVolume));
+  }
+
+  private computeSfxVolume(): number {
+    if (this.isMuted) return 0;
+    return Math.max(0, Math.min(1, this.masterVolume * this.sfxVolume));
+  }
+
   /**
    * Initializes the AudioContext upon user gesture.
    */
   public async init(): Promise<boolean> {
     if (typeof window === "undefined") return false;
-    if (this.isInitialized && this.ctx && this.ctx.state === "running") return true;
 
     try {
       const AudioCtxClass =
@@ -152,16 +227,18 @@ class AudioManager {
         await this.ctx.resume();
       }
 
-      // Create master gain bus
-      this.masterGain = this.ctx.createGain();
-      this.ambienceGain = this.ctx.createGain();
-      this.musicGain = this.ctx.createGain();
-      this.sfxGain = this.ctx.createGain();
+      // Create master gain bus ONLY ONCE to avoid disconnected orphan nodes
+      if (!this.masterGain) {
+        this.masterGain = this.ctx.createGain();
+        this.ambienceGain = this.ctx.createGain();
+        this.musicGain = this.ctx.createGain();
+        this.sfxGain = this.ctx.createGain();
 
-      this.ambienceGain.connect(this.masterGain);
-      this.musicGain.connect(this.masterGain);
-      this.sfxGain.connect(this.masterGain);
-      this.masterGain.connect(this.ctx.destination);
+        this.ambienceGain.connect(this.masterGain);
+        this.musicGain.connect(this.masterGain);
+        this.sfxGain.connect(this.masterGain);
+        this.masterGain.connect(this.ctx.destination);
+      }
 
       this.applyGains();
       this.isInitialized = true;
@@ -173,31 +250,44 @@ class AudioManager {
     }
   }
 
-  private applyGains() {
-    if (!this.ctx) return;
-    const now = this.ctx.currentTime;
-    const masterVal = this.isMuted ? 0 : this.masterVolume;
+  public applyGains() {
+    const musicVol = this.computeMusicVolume();
+    const sfxVol = this.computeSfxVolume();
 
-    if (this.masterGain) {
+    if (this.ctx && this.masterGain) {
+      const now = this.ctx.currentTime;
+      const masterVal = this.isMuted ? 0 : this.masterVolume;
+
       this.masterGain.gain.cancelScheduledValues(now);
-      this.masterGain.gain.linearRampToValueAtTime(masterVal, now + 0.1);
+      this.masterGain.gain.setValueAtTime(this.masterGain.gain.value, now);
+      this.masterGain.gain.linearRampToValueAtTime(masterVal, now + 0.04);
+
+      if (this.ambienceGain) {
+        this.ambienceGain.gain.cancelScheduledValues(now);
+        this.ambienceGain.gain.setValueAtTime(this.ambienceGain.gain.value, now);
+        this.ambienceGain.gain.linearRampToValueAtTime(this.ambienceVolume, now + 0.04);
+      }
+      if (this.musicGain) {
+        this.musicGain.gain.cancelScheduledValues(now);
+        this.musicGain.gain.setValueAtTime(this.musicGain.gain.value, now);
+        this.musicGain.gain.linearRampToValueAtTime(this.musicVolume, now + 0.04);
+      }
+      if (this.sfxGain) {
+        this.sfxGain.gain.cancelScheduledValues(now);
+        this.sfxGain.gain.setValueAtTime(this.sfxGain.gain.value, now);
+        this.sfxGain.gain.linearRampToValueAtTime(this.sfxVolume, now + 0.04);
+      }
     }
-    if (this.ambienceGain) {
-      this.ambienceGain.gain.cancelScheduledValues(now);
-      this.ambienceGain.gain.linearRampToValueAtTime(this.ambienceVolume, now + 0.1);
-    }
-    if (this.musicGain) {
-      this.musicGain.gain.cancelScheduledValues(now);
-      this.musicGain.gain.linearRampToValueAtTime(this.musicVolume, now + 0.1);
-    }
-    if (this.sfxGain) {
-      this.sfxGain.gain.cancelScheduledValues(now);
-      this.sfxGain.gain.linearRampToValueAtTime(this.sfxVolume, now + 0.1);
-    }
-    if (this.customAudio) {
-      this.customAudio.volume = this.isMuted
-        ? 0
-        : (this.currentRoom === "FINAL" ? 0.02 : 1) * this.masterVolume * this.musicVolume;
+
+    // Direct synchronous update of all active HTML Audio Elements
+    this.activeMediaElements.forEach((audio) => {
+      audio.muted = this.isMuted;
+      audio.volume = musicVol;
+    });
+
+    if (this.activeVoiceAudio) {
+      this.activeVoiceAudio.muted = this.isMuted;
+      this.activeVoiceAudio.volume = sfxVol;
     }
   }
 
@@ -205,20 +295,31 @@ class AudioManager {
 
   public setMuted(muted: boolean) {
     this.isMuted = muted;
-    if (!muted) {
-      if (this.customAudio && this.isPlaying) {
-        this.customAudio.play().catch(() => {});
+
+    if (muted) {
+      // Instantly pause and silence any playing media elements
+      this.activeMediaElements.forEach((audio) => {
+        audio.pause();
+        audio.muted = true;
+        audio.volume = 0;
+      });
+      if (this.activeVoiceAudio) {
+        this.activeVoiceAudio.pause();
+        this.activeVoiceAudio.muted = true;
       }
+    } else {
+      // Unmute and resume
       this.init().then(() => {
-        if (!this.isPlaying) {
+        if (this.customAudio && this.isPlaying) {
+          this.customAudio.muted = false;
+          this.customAudio.volume = this.computeMusicVolume();
+          this.customAudio.play().catch(() => {});
+        } else if (!this.isPlaying) {
           this.startPlayback();
         }
       });
-    } else {
-      if (this.customAudio) {
-        this.customAudio.pause();
-      }
     }
+
     this.applyGains();
     this.notify();
   }
@@ -293,9 +394,12 @@ class AudioManager {
     const nextIdx = (index + LOVE_SONGS_PLAYLIST.length) % LOVE_SONGS_PLAYLIST.length;
     this.currentTrackIndex = nextIdx;
     this.stopActivePlayback();
-    if (!this.isMuted) {
-      this.startPlayback();
+    if (this.isMuted) {
+      // Auto-unmute when user explicitly clicks a track
+      this.isMuted = false;
+      this.applyGains();
     }
+    this.startPlayback();
     this.notify();
   }
 
@@ -310,6 +414,9 @@ class AudioManager {
   public togglePlayPause() {
     if (this.isMuted) {
       this.setMuted(false);
+      if (!this.isPlaying) {
+        this.startPlayback();
+      }
       return;
     }
     if (this.isPlaying) {
@@ -360,26 +467,7 @@ class AudioManager {
         this.startPlayback();
       }
     } else {
-      // If playing love songs and user enters FINAL room, duck music to near silence per Rule 6
-      if (newRoom === "FINAL") {
-        if (this.customAudio) {
-          this.customAudio.volume = 0.02;
-        }
-        if (this.musicGain && this.ctx) {
-          const now = this.ctx.currentTime;
-          this.musicGain.gain.cancelScheduledValues(now);
-          this.musicGain.gain.linearRampToValueAtTime(0.02, now + 1.5);
-        }
-      } else {
-        if (this.customAudio) {
-          this.customAudio.volume = this.isMuted ? 0 : this.masterVolume * this.musicVolume;
-        }
-        if (this.musicGain && this.ctx) {
-          const now = this.ctx.currentTime;
-          this.musicGain.gain.cancelScheduledValues(now);
-          this.musicGain.gain.linearRampToValueAtTime(this.musicVolume, now + 1.5);
-        }
-      }
+      this.applyGains();
     }
     this.notify();
   }
@@ -400,29 +488,40 @@ class AudioManager {
     this.notify();
   }
 
-  private stopActivePlayback() {
-    if (this.synthInterval !== null) {
-      window.clearInterval(this.synthInterval);
-      this.synthInterval = null;
-    }
-    this.synthStep = 0;
+  public stopActivePlayback() {
+    // Invalidate active playback session
+    this.playbackSessionId++;
+    this.clearAllTimers();
 
-    // Stop active oscillators
+    // Stop and disconnect active oscillators
     this.activeOscillators.forEach((osc) => {
       try {
         osc.stop();
         osc.disconnect();
-      } catch {
-        // ignore already stopped
-      }
+      } catch {}
     });
     this.activeOscillators = [];
 
-    // Pause custom audio if active
-    if (this.customAudio) {
-      this.customAudio.pause();
-      this.customAudio = null;
-    }
+    // Stop and disconnect active buffer sources
+    this.activeBufferSources.forEach((src) => {
+      try {
+        src.stop();
+        src.disconnect();
+      } catch {}
+    });
+    this.activeBufferSources.clear();
+
+    // Thoroughly terminate ALL audio elements
+    this.activeMediaElements.forEach((audio) => {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.src = "";
+        audio.load();
+      } catch {}
+    });
+    this.activeMediaElements.clear();
+    this.customAudio = null;
 
     if (this.isBirthdayMelodyPlaying) {
       this.isBirthdayMelodyPlaying = false;
@@ -558,6 +657,7 @@ class AudioManager {
 
   private async startLoveSong(track: LoveSongTrack) {
     if (!this.ctx || !this.musicGain) return;
+    const sessionId = ++this.playbackSessionId;
 
     // 1. Try to load original master audio tracks
     const candidatePaths: string[] = [];
@@ -571,27 +671,44 @@ class AudioManager {
     }
 
     for (const path of candidatePaths) {
+      if (this.playbackSessionId !== sessionId) return;
+
       try {
         const audio = new Audio(path);
         audio.preload = "auto";
-        audio.volume = this.isMuted
-          ? 0
-          : (this.currentRoom === "FINAL" ? 0.02 : 1) * this.masterVolume * this.musicVolume;
+        audio.muted = this.isMuted;
+        audio.volume = this.computeMusicVolume();
+
+        // Track immediately so stopActivePlayback can abort if user clicks another song
+        this.activeMediaElements.add(audio);
+        this.customAudio = audio;
 
         audio.onended = () => {
-          this.nextTrack();
+          if (this.playbackSessionId === sessionId) {
+            this.nextTrack();
+          }
         };
 
         const playPromise = audio.play();
         if (playPromise !== undefined) {
           await playPromise;
-          this.customAudio = audio;
+        }
+
+        // Stale check after promise resolution
+        if (this.playbackSessionId !== sessionId) {
+          audio.pause();
+          audio.src = "";
+          this.activeMediaElements.delete(audio);
           return;
         }
+
+        return; // Successfully playing master audio file
       } catch {
         // Try next candidate or smoothly fall back to procedural synth arrangement
       }
     }
+
+    if (this.playbackSessionId !== sessionId) return;
 
     // 2. High-fidelity procedural synthesizer arrangements
     if (track.id === "perfect") {
@@ -635,7 +752,7 @@ class AudioManager {
     // Warm underlying bass pad
     this.createDrone([98.0, 146.83], 0.05, "sine");
 
-    this.synthInterval = window.setInterval(() => {
+    this.registerInterval(() => {
       if (!this.ctx || !this.musicGain || this.isMuted) return;
 
       const current = chords[chordIdx];
@@ -685,7 +802,7 @@ class AudioManager {
     // Warm soulful background drone
     this.createDrone([73.42, 110.0], 0.05, "triangle");
 
-    this.synthInterval = window.setInterval(() => {
+    this.registerInterval(() => {
       if (!this.ctx || !this.musicGain || this.isMuted) return;
 
       const current = chords[chordIdx];
@@ -786,7 +903,7 @@ class AudioManager {
       { note: 466.16, dur: 0.26 }, // Bb4
       { note: 440.00, dur: 0.65, chord: [174.61, 220.0, 349.23, 440.0] }, // A4 + F Major
       { note: 349.23, dur: 0.65, chord: [174.61, 261.63, 349.23] }, // F4
-      { note: 392.00, dur: 0.65, chord: [130.81, 196.0, 261.63, 392.0] }, // G4 + C Major
+      { note: 392.00, dur: 0.65, chord: [130.81, 261.63, 392.0] }, // G4 + C Major
       { note: 349.23, dur: 2.4, chord: [87.31, 174.61, 261.63, 349.23, 440.0, 523.25] }, // F4 + Grand F Major
       { note: 0, dur: 1.5 },
     ];
@@ -816,7 +933,7 @@ class AudioManager {
 
       noteIdx = (noteIdx + 1) % melody.length;
       const nextDelay = (item ? item.dur : 0.5) * 1000;
-      this.synthInterval = window.setTimeout(playStep, nextDelay);
+      this.registerTimeout(playStep, nextDelay);
     };
 
     playStep();
@@ -992,6 +1109,7 @@ class AudioManager {
       gain.connect(this.ambienceGain);
 
       whiteNoise.start();
+      this.activeBufferSources.add(whiteNoise);
     } catch {
       // fallback
     }
@@ -1053,11 +1171,11 @@ class AudioManager {
     };
 
     playChord();
-    this.synthInterval = window.setInterval(playChord, intervalMs);
+    this.registerInterval(playChord, intervalMs);
   }
 
   private startMusicBoxTones(scale: number[], intervalMs: number) {
-    this.synthInterval = window.setInterval(() => {
+    this.registerInterval(() => {
       if (!this.ctx || !this.ambienceGain || this.isMuted) return;
       const freq = scale[Math.floor(Math.random() * scale.length)];
       const now = this.ctx.currentTime;
@@ -1511,6 +1629,159 @@ class AudioManager {
     } catch {
       // ignore
     }
+  }
+
+  /**
+   * Satisfying, crisp 3D Laser Gun shot sound with muzzle crack and high sweep.
+   */
+  public playLaserBlaster() {
+    if (this.isMuted) return;
+    if (!this.ctx || !this.sfxGain) {
+      this.init();
+      return;
+    }
+
+    try {
+      const audioNow = this.ctx.currentTime;
+
+      // 1. Transient laser crack
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(880, audioNow);
+      osc.frequency.exponentialRampToValueAtTime(95, audioNow + 0.12);
+
+      filter.type = "lowpass";
+      filter.frequency.setValueAtTime(2600, audioNow);
+      filter.frequency.exponentialRampToValueAtTime(280, audioNow + 0.12);
+
+      gain.gain.setValueAtTime(0.001, audioNow);
+      gain.gain.linearRampToValueAtTime(0.22 * this.sfxVolume, audioNow + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioNow + 0.14);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.sfxGain);
+
+      osc.start(audioNow);
+      osc.stop(audioNow + 0.15);
+
+      // 2. High crystal laser harmonic
+      const osc2 = this.ctx.createOscillator();
+      const gain2 = this.ctx.createGain();
+      osc2.type = "triangle";
+      osc2.frequency.setValueAtTime(1480, audioNow);
+      osc2.frequency.exponentialRampToValueAtTime(440, audioNow + 0.08);
+
+      gain2.gain.setValueAtTime(0.001, audioNow);
+      gain2.gain.linearRampToValueAtTime(0.12 * this.sfxVolume, audioNow + 0.004);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, audioNow + 0.09);
+
+      osc2.connect(gain2);
+      gain2.connect(this.sfxGain);
+      osc2.start(audioNow);
+      osc2.stop(audioNow + 0.1);
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * Satisfying Cute Villain Elimination SFX.
+   * Cheerful pop + magical chime sparkle.
+   */
+  public playVillainDefeated() {
+    if (this.isMuted) return;
+    if (!this.ctx || !this.sfxGain) {
+      this.init();
+      return;
+    }
+
+    try {
+      const audioNow = this.ctx.currentTime;
+      // 1. Pop bubble
+      const popOsc = this.ctx.createOscillator();
+      const popGain = this.ctx.createGain();
+      popOsc.type = "sine";
+      popOsc.frequency.setValueAtTime(260, audioNow);
+      popOsc.frequency.exponentialRampToValueAtTime(920, audioNow + 0.09);
+
+      popGain.gain.setValueAtTime(0.001, audioNow);
+      popGain.gain.linearRampToValueAtTime(0.24 * this.sfxVolume, audioNow + 0.01);
+      popGain.gain.exponentialRampToValueAtTime(0.0001, audioNow + 0.12);
+
+      popOsc.connect(popGain);
+      popGain.connect(this.sfxGain);
+      popOsc.start(audioNow);
+      popOsc.stop(audioNow + 0.13);
+
+      // 2. Victory sparkle chord (C6, E6, G6, C7)
+      [1046.5, 1318.51, 1567.98, 2093.0].forEach((freq, idx) => {
+        if (!this.ctx || !this.sfxGain) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = "triangle";
+        osc.frequency.setValueAtTime(freq, audioNow + 0.02 + idx * 0.035);
+
+        gain.gain.setValueAtTime(0.001, audioNow + 0.02 + idx * 0.035);
+        gain.gain.linearRampToValueAtTime(0.12 * this.sfxVolume, audioNow + 0.02 + idx * 0.035 + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioNow + 0.02 + idx * 0.035 + 0.35);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start(audioNow + 0.02 + idx * 0.035);
+        osc.stop(audioNow + 0.02 + idx * 0.035 + 0.38);
+      });
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * Plays a random cute short voice note from Anshika.
+   * Throttled so it doesn't overlap on rapid fire.
+   */
+  public playRandomCuteVoiceNote(onSubtitle?: (text: string) => void) {
+    if (this.isMuted) return;
+    const now = Date.now();
+    // Throttle to at least 2.5s between voice notes
+    if (now - this.lastVoiceNoteTime < 2500) return;
+    this.lastVoiceNoteTime = now;
+
+    if (this.activeVoiceAudio) {
+      try {
+        this.activeVoiceAudio.pause();
+        this.activeVoiceAudio.src = "";
+      } catch {}
+      this.activeVoiceAudio = null;
+    }
+
+    const note = ANSHIKA_VOICE_NOTES[Math.floor(Math.random() * ANSHIKA_VOICE_NOTES.length)];
+    if (!note) return;
+
+    try {
+      const audio = new Audio(`/media/audio/${note.file}`);
+      audio.preload = "auto";
+      audio.muted = this.isMuted;
+      audio.volume = this.computeSfxVolume();
+      this.activeVoiceAudio = audio;
+
+      audio.onended = () => {
+        if (this.activeVoiceAudio === audio) {
+          this.activeVoiceAudio = null;
+        }
+      };
+
+      audio.play().catch(() => {});
+
+      if (onSubtitle) {
+        onSubtitle(note.subtitle);
+      }
+    } catch {}
   }
 }
 

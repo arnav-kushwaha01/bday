@@ -75,7 +75,7 @@ export function AudioCassetteModal({ isOpen, onClose }: AudioCassetteModalProps)
 
   const handleTogglePlay = () => {
     soundEngine.playTapeClick();
-    if (!audioEnabled) {
+    if (!audioEnabled || soundEngine.getIsMuted()) {
       setAudioEnabled(true);
       soundEngine.setMuted(false);
     }
@@ -85,16 +85,28 @@ export function AudioCassetteModal({ isOpen, onClose }: AudioCassetteModalProps)
 
   const handlePrev = () => {
     soundEngine.playTapeClick();
+    if (!audioEnabled || soundEngine.getIsMuted()) {
+      setAudioEnabled(true);
+      soundEngine.setMuted(false);
+    }
     soundEngine.previousTrack();
   };
 
   const handleNext = () => {
     soundEngine.playTapeClick();
+    if (!audioEnabled || soundEngine.getIsMuted()) {
+      setAudioEnabled(true);
+      soundEngine.setMuted(false);
+    }
     soundEngine.nextTrack();
   };
 
   const handleModeChange = (mode: AudioPlayMode) => {
     soundEngine.playTapeClick();
+    if (!audioEnabled || soundEngine.getIsMuted()) {
+      setAudioEnabled(true);
+      soundEngine.setMuted(false);
+    }
     soundEngine.setPlayMode(mode);
     setPlayMode(mode);
   };
@@ -103,16 +115,28 @@ export function AudioCassetteModal({ isOpen, onClose }: AudioCassetteModalProps)
     setMasterVol(v);
     soundEngine.setMasterVolume(v);
     setStoreVolume(v);
+    if (v > 0 && soundEngine.getIsMuted()) {
+      soundEngine.setMuted(false);
+      setAudioEnabled(true);
+    }
   };
 
   const handleAmbienceVolChange = (v: number) => {
     setAmbienceVol(v);
     soundEngine.setAmbienceVolume(v);
+    if (v > 0 && soundEngine.getIsMuted()) {
+      soundEngine.setMuted(false);
+      setAudioEnabled(true);
+    }
   };
 
   const handleSfxVolChange = (v: number) => {
     setSfxVol(v);
     soundEngine.setSfxVolume(v);
+    if (v > 0 && soundEngine.getIsMuted()) {
+      soundEngine.setMuted(false);
+      setAudioEnabled(true);
+    }
   };
 
   return (
@@ -619,6 +643,10 @@ export function AudioCassetteModal({ isOpen, onClose }: AudioCassetteModalProps)
                     key={track.id}
                     onClick={() => {
                       soundEngine.playTapeClick();
+                      if (!audioEnabled || soundEngine.getIsMuted()) {
+                        setAudioEnabled(true);
+                        soundEngine.setMuted(false);
+                      }
                       soundEngine.setTrackIndex(idx);
                     }}
                     style={{

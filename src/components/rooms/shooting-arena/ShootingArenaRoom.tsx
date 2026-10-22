@@ -2,7 +2,7 @@
 
 import { useState, useRef, useMemo, useEffect, useCallback } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Text, Float } from "@react-three/drei";
+import { Text, Float, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { Door } from "../RoomPrimitives";
 import { soundEngine } from "@/engine/audio/AudioManager";
@@ -526,37 +526,34 @@ function FirstPersonBlaster({
   isFiring: boolean;
 }) {
   const blasterGroup = useRef<THREE.Group>(null);
+  const recoilOffset = useRef(0);
+  const recoilAngle = useRef(0);
 
-  useFrame((_, delta) => {
+  useFrame(({ camera }, delta) => {
     if (!blasterGroup.current) return;
-    // Weapon sway & recoil animation
+
+    // Recoil kickback recovery
     if (isFiring) {
-      blasterGroup.current.position.z = THREE.MathUtils.lerp(
-        blasterGroup.current.position.z,
-        -0.85,
-        delta * 30
-      );
-      blasterGroup.current.rotation.x = THREE.MathUtils.lerp(
-        blasterGroup.current.rotation.x,
-        0.18,
-        delta * 30
-      );
+      recoilOffset.current = 0.12;
+      recoilAngle.current = 0.15;
     } else {
-      blasterGroup.current.position.z = THREE.MathUtils.lerp(
-        blasterGroup.current.position.z,
-        -1.0,
-        delta * 12
-      );
-      blasterGroup.current.rotation.x = THREE.MathUtils.lerp(
-        blasterGroup.current.rotation.x,
-        0,
-        delta * 12
-      );
+      recoilOffset.current = THREE.MathUtils.lerp(recoilOffset.current, 0, delta * 16);
+      recoilAngle.current = THREE.MathUtils.lerp(recoilAngle.current, 0, delta * 16);
     }
+
+    // Attach blaster to camera position and orientation in real-time
+    blasterGroup.current.position.copy(camera.position);
+    blasterGroup.current.quaternion.copy(camera.quaternion);
+
+    // Local FPS offset relative to camera
+    blasterGroup.current.translateZ(-0.75 + recoilOffset.current);
+    blasterGroup.current.translateX(0.3);
+    blasterGroup.current.translateY(-0.24);
+    blasterGroup.current.rotateX(recoilAngle.current);
   });
 
   return (
-    <group ref={blasterGroup} position={[0.32, -0.28, -1.0]}>
+    <group ref={blasterGroup}>
       {/* Sleek Blaster Body (Obsidian & Metallic Rose Gold) */}
       <mesh castShadow>
         <boxGeometry args={[0.14, 0.18, 0.65]} />
@@ -598,7 +595,7 @@ interface ArenaVillain {
 }
 
 export default function ShootingArenaRoom() {
-  const { camera } = useThree();
+  const { camera, gl } = useThree();
   const [villainsDefeated, setVillainsDefeated] = useState<number>(0);
   const [score, setScore] = useState<number>(0);
   const [ammo, setAmmo] = useState<number>(12);
@@ -608,6 +605,11 @@ export default function ShootingArenaRoom() {
   const [activeCluePopup, setActiveCluePopup] = useState<SecretClueItem | null>(null);
   const [hitPopups, setHitPopups] = useState<{ id: number; text: string; pos: [number, number, number] }[]>([]);
   const [hasCelebrated, setHasCelebrated] = useState<boolean>(false);
+  const [isPointerLocked, setIsPointerLocked] = useState<boolean>(false);
+  const [hitMarkerActive, setHitMarkerActive] = useState<boolean>(false);
+  const [anshikaVoiceSubtitle, setAnshikaVoiceSubtitle] = useState<string | null>(null);
+
+  const playerRadarRef = useRef<SVGGElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // 6 Nostalgic Investigation Clues across the Large 50m Arena
@@ -676,52 +678,42 @@ export default function ShootingArenaRoom() {
     []
   );
 
-  // Shoot Laser Function
-  const handleShoot = useCallback(() => {
-    if (ammo <= 0) {
-      soundEngine.playTapeClick();
-      // Auto-reload
-      setTimeout(() => setAmmo(12), 800);
-      return;
-    }
-
-    setAmmo((a) => a - 1);
-    setIsFiring(true);
-    soundEngine.playTargetPop();
-    setTimeout(() => setIsFiring(false), 90);
-  }, [ammo]);
-
-  // Handle Clicking on Screen to Shoot
+  // Sync Pointer Lock State
   useEffect(() => {
-    const handlePointerDown = (e: MouseEvent | TouchEvent) => {
-      // Don't capture clicks on HUD UI buttons or modals
-      const target = e.target as HTMLElement;
-      if (target.closest("button") || target.closest("select") || target.closest("input")) return;
-      handleShoot();
+    const handleLockChange = () => {
+      setIsPointerLocked(document.pointerLockElement === gl.domElement);
     };
+    document.addEventListener("pointerlockchange", handleLockChange);
+    return () => document.removeEventListener("pointerlockchange", handleLockChange);
+  }, [gl]);
 
-    window.addEventListener("pointerdown", handlePointerDown);
-    return () => window.removeEventListener("pointerdown", handlePointerDown);
-  }, [handleShoot]);
-
-  // Reload with [R] key
-  useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "r" || e.key === "R") {
-        soundEngine.playTapeClick();
-        setAmmo(12);
+  // Handle Discovering Clue
+  const handleDiscoverClue = useCallback(
+    (clue: SecretClueItem) => {
+      if (!foundClueIds.has(clue.id)) {
+        soundEngine.playWishStar();
+        setScore((s) => s + 500);
+        setFoundClueIds((prev) => new Set([...prev, clue.id]));
       }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, []);
+      setActiveCluePopup(clue);
+    },
+    [foundClueIds]
+  );
 
   // Handle Hitting a Cute Villain
   const handleHitVillain = useCallback(
     (villain: ArenaVillain) => {
       if (defeatedIds.has(villain.id)) return;
 
-      soundEngine.playTargetPop();
+      soundEngine.playVillainDefeated();
+
+      // Trigger authentic cute voice note from Anshika!
+      soundEngine.playRandomCuteVoiceNote((subtitle) => {
+        setAnshikaVoiceSubtitle(subtitle);
+        setTimeout(() => {
+          setAnshikaVoiceSubtitle((prev) => (prev === subtitle ? null : prev));
+        }, 3600);
+      });
 
       // Floating hit text
       const phrases = ["POW! 💖", "AWWW! 🥺", "SLAYYY! ✨", "HEART! ♥", "CUTE! 👑"];
@@ -765,18 +757,116 @@ export default function ShootingArenaRoom() {
     [defeatedIds, hasCelebrated]
   );
 
-  // Handle Discovering Clue
-  const handleDiscoverClue = useCallback(
-    (clue: SecretClueItem) => {
-      if (!foundClueIds.has(clue.id)) {
-        soundEngine.playWishStar();
-        setScore((s) => s + 500);
-        setFoundClueIds((prev) => new Set([...prev, clue.id]));
+  // Shoot Laser Function with First-Person Center Raycasting
+  const handleShoot = useCallback(() => {
+    if (ammo <= 0) {
+      soundEngine.playTapeClick();
+      // Auto-reload
+      setTimeout(() => setAmmo(12), 800);
+      return;
+    }
+
+    setAmmo((a) => a - 1);
+    setIsFiring(true);
+    soundEngine.playLaserBlaster();
+    setTimeout(() => setIsFiring(false), 90);
+
+    // ── 3D FPS Crosshair Raycast Aiming ──
+    const camPos = camera.position;
+    const camDir = new THREE.Vector3();
+    camera.getWorldDirection(camDir);
+    camDir.normalize();
+
+    // 1. Raycast Cute Villains
+    let hitVillain: ArenaVillain | null = null;
+    let closestDist = 52;
+
+    villains.forEach((v) => {
+      if (defeatedIds.has(v.id)) return;
+      const vPos = new THREE.Vector3(...v.pos);
+      const toV = vPos.clone().sub(camPos);
+      const proj = toV.dot(camDir);
+      if (proj > 0.4 && proj < closestDist) {
+        const closestPoint = camPos.clone().add(camDir.clone().multiplyScalar(proj));
+        // Generous, satisfying 1.45m aim cone
+        if (closestPoint.distanceTo(vPos) < 1.45) {
+          closestDist = proj;
+          hitVillain = v;
+        }
       }
-      setActiveCluePopup(clue);
-    },
-    [foundClueIds]
-  );
+    });
+
+    if (hitVillain) {
+      handleHitVillain(hitVillain);
+      setHitMarkerActive(true);
+      setTimeout(() => setHitMarkerActive(false), 160);
+      return;
+    }
+
+    // 2. Raycast Secret Clue Pedestals
+    clues.forEach((clue) => {
+      const cPos = new THREE.Vector3(...clue.pos);
+      const toC = cPos.clone().sub(camPos);
+      const proj = toC.dot(camDir);
+      if (proj > 0.4 && proj < 35) {
+        const closestPoint = camPos.clone().add(camDir.clone().multiplyScalar(proj));
+        if (closestPoint.distanceTo(cPos) < 1.8) {
+          handleDiscoverClue(clue);
+        }
+      }
+    });
+  }, [ammo, camera, villains, defeatedIds, clues, handleHitVillain, handleDiscoverClue]);
+
+  // Handle Clicking on Screen to Lock Pointer & Shoot
+  useEffect(() => {
+    const handlePointerDown = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.closest("button") ||
+        target.closest("select") ||
+        target.closest("input") ||
+        target.closest(".no-lock")
+      ) {
+        return;
+      }
+
+      if (document.pointerLockElement !== gl.domElement) {
+        gl.domElement.requestPointerLock();
+      } else {
+        handleShoot();
+      }
+    };
+
+    window.addEventListener("pointerdown", handlePointerDown);
+    return () => window.removeEventListener("pointerdown", handlePointerDown);
+  }, [gl, handleShoot]);
+
+  // Reload with [R] key
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "r" || e.key === "R") {
+        soundEngine.playTapeClick();
+        setAmmo(12);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, []);
+
+  // Update Mini-Map Radar Player Marker every frame with zero React re-render overhead
+  useFrame(() => {
+    if (playerRadarRef.current) {
+      const rx = 90 + (camera.position.x / 26) * 72;
+      const ry = 90 + (camera.position.z / 26) * 72;
+      const dir = new THREE.Vector3();
+      camera.getWorldDirection(dir);
+      const deg = Math.atan2(dir.x, -dir.z) * (180 / Math.PI);
+      playerRadarRef.current.setAttribute(
+        "transform",
+        `translate(${rx.toFixed(1)}, ${ry.toFixed(1)}) rotate(${deg.toFixed(1)})`
+      );
+    }
+  });
 
   return (
     <group>
@@ -975,6 +1065,272 @@ export default function ShootingArenaRoom() {
 
       {/* ── First-Person Weapon attached to Camera View ── */}
       <FirstPersonBlaster isFiring={isFiring} />
+
+      {/* ── 3D FPS Crosshair, Voice Note Subtitles, and 52m Tactical Radar ── */}
+      <Html fullscreen style={{ pointerEvents: "none" }}>
+        {/* 1. Tactical FPS Crosshair (Always Centered) */}
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: isFiring ? 46 : 32,
+            height: isFiring ? 46 : 32,
+            pointerEvents: "none",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "width 0.08s ease, height 0.08s ease",
+            zIndex: 40,
+          }}
+        >
+          {/* Outer Crosshair Ticks */}
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              width: 2,
+              height: 8,
+              background: hitMarkerActive ? "#ef4444" : "#f43f5e",
+              boxShadow: hitMarkerActive ? "0 0 8px #ef4444" : "0 0 6px #f43f5e",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              bottom: 0,
+              width: 2,
+              height: 8,
+              background: hitMarkerActive ? "#ef4444" : "#f43f5e",
+              boxShadow: hitMarkerActive ? "0 0 8px #ef4444" : "0 0 6px #f43f5e",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              left: 0,
+              height: 2,
+              width: 8,
+              background: hitMarkerActive ? "#ef4444" : "#f43f5e",
+              boxShadow: hitMarkerActive ? "0 0 8px #ef4444" : "0 0 6px #f43f5e",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              right: 0,
+              height: 2,
+              width: 8,
+              background: hitMarkerActive ? "#ef4444" : "#f43f5e",
+              boxShadow: hitMarkerActive ? "0 0 8px #ef4444" : "0 0 6px #f43f5e",
+            }}
+          />
+          {/* Center Precision Aim Dot */}
+          <div
+            style={{
+              width: 4,
+              height: 4,
+              borderRadius: "50%",
+              background: hitMarkerActive ? "#ffffff" : "#fde047",
+              boxShadow: hitMarkerActive ? "0 0 8px #ffffff" : "0 0 4px #fde047",
+            }}
+          />
+
+          {/* Hitmarker Flash X */}
+          {hitMarkerActive && (
+            <div
+              style={{
+                position: "absolute",
+                fontSize: "1.1rem",
+                color: "#ef4444",
+                fontWeight: 900,
+                textShadow: "0 0 10px #ef4444",
+                animation: "pulse 0.15s ease-out",
+              }}
+            >
+              ✕
+            </div>
+          )}
+        </div>
+
+        {/* 2. Authentic Voice Note Subtitle Speech Toast (Top Center) */}
+        {anshikaVoiceSubtitle && (
+          <div
+            style={{
+              position: "absolute",
+              top: "4.8rem",
+              left: "50%",
+              transform: "translateX(-50%)",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.85rem",
+              padding: "0.65rem 1.4rem",
+              background: "rgba(136, 19, 55, 0.92)",
+              border: `1.5px solid #f43f5e`,
+              boxShadow: "0 10px 30px rgba(0,0,0,0.8), 0 0 18px rgba(244,63,94,0.4)",
+              borderRadius: 8,
+              backdropFilter: "blur(10px)",
+              fontFamily: "var(--font-geist-mono), monospace",
+              zIndex: 65,
+              pointerEvents: "none",
+            }}
+          >
+            <span style={{ fontSize: "1.5rem" }}>💖</span>
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <span
+                style={{
+                  color: "#fecdd3",
+                  fontSize: "0.6rem",
+                  letterSpacing: "0.15em",
+                  fontWeight: 800,
+                }}
+              >
+                ANSHIKA VOICE NOTE // ARCHIVE MEMORY
+              </span>
+              <span
+                style={{
+                  color: "#ffffff",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.04em",
+                }}
+              >
+                {anshikaVoiceSubtitle}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* 3. Pointer Lock Status & Mouse Aim Hint */}
+        {!isPointerLocked && (
+          <div
+            style={{
+              position: "absolute",
+              top: "7.8rem",
+              left: "50%",
+              transform: "translateX(-50%)",
+              background: "rgba(9, 9, 15, 0.85)",
+              border: `1px solid ${THEME.evidence.primary}`,
+              borderRadius: 6,
+              padding: "0.45rem 1rem",
+              fontSize: "0.62rem",
+              color: THEME.evidence.primary,
+              letterSpacing: "0.14em",
+              fontWeight: 800,
+              zIndex: 40,
+              backdropFilter: "blur(8px)",
+              pointerEvents: "none",
+            }}
+          >
+            🎯 CLICK SCREEN TO LOCK MOUSE AIM // [ESC] TO UNLOCK
+          </div>
+        )}
+
+        {/* 4. Tactical Arena Radar Mini-Map (Bottom Left) */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "1.2rem",
+            left: "1.2rem",
+            background: "rgba(9, 9, 15, 0.92)",
+            border: `1.5px solid ${THEME.evidence.primary}99`,
+            borderRadius: 8,
+            boxShadow: "0 12px 36px rgba(0,0,0,0.85), inset 0 0 12px rgba(250,204,21,0.06)",
+            backdropFilter: "blur(10px)",
+            padding: "0.65rem 0.8rem",
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.35rem",
+            zIndex: 50,
+            fontFamily: "var(--font-geist-mono), monospace",
+            pointerEvents: "auto",
+          }}
+        >
+          {/* Header */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "0.55rem" }}>
+            <span style={{ color: THEME.evidence.primary, fontWeight: 800, letterSpacing: "0.15em" }}>
+              ARENA RADAR // 50M
+            </span>
+            <span style={{ color: "#4ade80", fontSize: "0.5rem", fontWeight: 700 }}>● SCAN ACTIVE</span>
+          </div>
+
+          {/* SVG Radar Map */}
+          <svg width="180" height="180" viewBox="0 0 180 180" style={{ background: "#050508", borderRadius: 4 }}>
+            {/* Radar Grid Circles */}
+            <circle cx="90" cy="90" r="82" fill="none" stroke="#27272a" strokeWidth="1" strokeDasharray="3 3" />
+            <circle cx="90" cy="90" r="54" fill="none" stroke="#18181b" strokeWidth="1" />
+            <circle cx="90" cy="90" r="26" fill="none" stroke="#18181b" strokeWidth="1" />
+            <line x1="90" y1="8" x2="90" y2="172" stroke="#18181b" strokeWidth="1" />
+            <line x1="8" y1="90" x2="172" y2="90" stroke="#18181b" strokeWidth="1" />
+
+            {/* Arena Outer Boundary Perimeter (52m x 52m) */}
+            <rect x="18" y="18" width="144" height="144" fill="none" stroke="#4338ca" strokeWidth="1.5" />
+
+            {/* Central Gazebo */}
+            <circle cx="90" cy="90" r="15" fill="#312e81" stroke="#f59e0b" strokeWidth="1" fillOpacity="0.6" />
+
+            {/* Skywalks */}
+            <rect x="54" y="38" width="72" height="10" fill="#4338ca" fillOpacity="0.4" />
+            <rect x="134" y="54" width="10" height="72" fill="#4338ca" fillOpacity="0.4" />
+            <rect x="36" y="54" width="10" height="72" fill="#4338ca" fillOpacity="0.4" />
+
+            {/* 6 Clue Pedestals (Stars) */}
+            {clues.map((c) => {
+              const cx = 90 + (c.pos[0] / 26) * 72;
+              const cy = 90 + (c.pos[2] / 26) * 72;
+              const isFound = foundClueIds.has(c.id);
+              return (
+                <circle
+                  key={c.id}
+                  cx={cx}
+                  cy={cy}
+                  r="3.5"
+                  fill={isFound ? "#4ade80" : "#f59e0b"}
+                  stroke="#fff"
+                  strokeWidth="1"
+                />
+              );
+            })}
+
+            {/* 14 Cute Villains as Radar Blips */}
+            {villains.map((v) => {
+              if (defeatedIds.has(v.id)) return null;
+              const vx = 90 + (v.pos[0] / 26) * 72;
+              const vy = 90 + (v.pos[2] / 26) * 72;
+              const col =
+                v.type === "goblin"
+                  ? "#a855f7"
+                  : v.type === "birdie"
+                  ? "#f43f5e"
+                  : v.type === "teddy"
+                  ? "#f59e0b"
+                  : "#38bdf8";
+              return <circle key={v.id} cx={vx} cy={vy} r="2.8" fill={col} />;
+            })}
+
+            {/* Real-time Player Position & View Cone */}
+            <g ref={playerRadarRef} transform="translate(90, 90)">
+              <polygon points="0,-18 10,-30 -10,-30" fill="#facc15" fillOpacity="0.2" />
+              <circle r="5" fill="#facc15" />
+              <polygon points="0,-8 3,3 0,1 -3,3" fill="#ffffff" />
+            </g>
+          </svg>
+
+          {/* Telemetry Footer */}
+          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.52rem", color: "#a1a1aa" }}>
+            <span>
+              AMMO: <strong style={{ color: "#38bdf8" }}>{ammo} / 12</strong>
+            </span>
+            <span>
+              VILLAINS: <strong style={{ color: "#f43f5e" }}>{villainsDefeated} / 23</strong>
+            </span>
+            <span>
+              CLUES: <strong style={{ color: "#4ade80" }}>{foundClueIds.size} / 6</strong>
+            </span>
+          </div>
+        </div>
+      </Html>
 
       {/* ── Return Door leading back to Archive Hub ── */}
       <Door

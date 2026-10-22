@@ -211,6 +211,17 @@ export function PlayerController() {
         isMouseDown.current = false;
         return;
       }
+
+      // ── Proper 3D FPS Pointer Lock Aim ──
+      if (typeof document !== "undefined" && document.pointerLockElement) {
+        yaw.current -= e.movementX * MOUSE_SENSITIVITY;
+        pitch.current -= e.movementY * MOUSE_SENSITIVITY;
+        const minP = isInspectModeRef.current ? -Math.PI * 0.48 : MIN_PITCH;
+        const maxP = isInspectModeRef.current ? Math.PI * 0.48 : MAX_PITCH;
+        pitch.current = Math.max(minP, Math.min(maxP, pitch.current));
+        return;
+      }
+
       if (!isMouseDown.current) return;
       const dx = e.clientX - lastMousePos.current.x;
       const dy = e.clientY - lastMousePos.current.y;
@@ -218,7 +229,9 @@ export function PlayerController() {
 
       yaw.current -= dx * MOUSE_SENSITIVITY;
       pitch.current -= dy * MOUSE_SENSITIVITY;
-      pitch.current = Math.max(MIN_PITCH, Math.min(MAX_PITCH, pitch.current));
+      const minP = isInspectModeRef.current ? -Math.PI * 0.48 : MIN_PITCH;
+      const maxP = isInspectModeRef.current ? Math.PI * 0.48 : MAX_PITCH;
+      pitch.current = Math.max(minP, Math.min(maxP, pitch.current));
     };
 
     const handleTouchStart = () => {
